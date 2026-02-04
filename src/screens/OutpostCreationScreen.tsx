@@ -18,47 +18,6 @@ export default function OutpostCreationScreen() {
 
     return (
         <div className="flex flex-col h-screen bg-[#0f1115] text-white font-sans overflow-hidden">
-
-            {/* --- Header --- */}
-            <header className="flex items-center justify-between px-4 lg:px-6 py-3 bg-[#111318] border-b border-[#282e39] z-30">
-                <div className="flex items-center gap-3">
-                    <button
-                        className="lg:hidden text-[#9da6b9] hover:text-white"
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                    >
-                        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-                    </button>
-                    <div className="w-6 h-6 text-[#135bec] flex items-center justify-center">
-                        <Hexagon size={24} strokeWidth={2.5} />
-                    </div>
-                    <h2 className="text-base font-bold tracking-tight">FleetCore</h2>
-                </div>
-
-                <div className="flex items-center gap-4 lg:gap-8">
-                    <nav className="hidden lg:flex items-center gap-6">
-                        {['Dashboard', 'Missions', 'Drones'].map((item) => (
-                            <a key={item} href="#" className="text-sm font-medium text-[#9da6b9] hover:text-white transition-colors">
-                                {item}
-                            </a>
-                        ))}
-                        <a href="#" className="text-sm font-medium text-white border-b-2 border-[#135bec] pb-0.5">
-                            Outposts
-                        </a>
-                    </nav>
-                    <div className="flex items-center gap-1.5">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#1c1f27]">
-                            <Bell size={18} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#1c1f27]">
-                            <Settings size={18} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#1c1f27]">
-                            <User size={18} />
-                        </Button>
-                    </div>
-                </div>
-            </header>
-
             {/* --- Main Layout --- */}
             <div className="flex flex-1 relative overflow-hidden">
 
