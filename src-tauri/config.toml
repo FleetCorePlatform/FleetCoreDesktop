@@ -1,0 +1,7 @@
+[development]
+backend_url = "http://localhost:8080"
+api_key = "dev_key_12345"
+
+[production]
+backend_url = "https://api.production.com"
+api_key = "prod_key_67890"
