@@ -1,67 +1,63 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
     User, Hexagon, Sun, Moon,
-    Menu, X, LayoutDashboard, Map
+    Menu, X, LayoutDashboard, Map,
+    ShieldAlert, RefreshCw, CheckCircle, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useTheme } from "@/ThemeProvider.tsx";
+import { apiCall } from "@/utils/api.ts";
+import {invoke} from "@tauri-apps/api/core";
+
+interface Check {
+    name: string;
+    status: "UP" | "DOWN";
+    data?: any;
+}
+
+interface Health {
+    status: "UP" | "DOWN";
+    checks: Array<Check>;
+}
 
 const getRouteIndex = (pathname: string) => {
     if (pathname === "/") return 0;
-
-    // 1. Drones (Fleet) - Left side feature
     if (pathname.startsWith("/drones")) return 1;
-
-    // 2. Outpost Cluster
     if (pathname.startsWith("/outposts")) {
-        // List View
         if (pathname === "/outposts") return 2.0;
-        // Creation
         if (pathname === "/outposts/new") return 2.1;
-        // Detail (e.g. /outposts/123)
         return 2.2;
     }
-
-    // 3. Groups (Accessed FROM Outposts, so Right of Outposts)
     if (pathname.startsWith("/groups")) return 3;
-
-    // 4. Missions (Accessed FROM Groups, so Right of Groups)
     if (pathname.startsWith("/missions")) {
-        // Create New Mission (Deepest level)
         if (pathname.includes("/new")) return 4.1;
-        // Mission List
         return 4.0;
     }
-
-    // 5. Profile (Always last)
     if (pathname.startsWith("/profile")) return 5;
-
     return 0;
 };
 
-// 2. Page Animation Variants
 const slideVariants = {
     enter: (direction: number) => ({
         x: direction > 0 ? "100%" : "-100%",
         opacity: 0,
-        // Add absolute position to prevent layout jumping during exit/enter overlap
-        position: 'absolute',
+        position: 'absolute' as const,
     }),
     center: {
         x: 0,
         opacity: 1,
-        position: 'relative',
+        position: 'relative' as const,
     },
     exit: (direction: number) => ({
         x: direction < 0 ? "100%" : "-100%",
         opacity: 0,
-        position: 'absolute',
+        position: 'absolute' as const,
     }),
 };
 
-// 3. Sidebar Variants (Unchanged)
 const sidebarVariants = {
     closed: { x: "-100%", transition: { type: "spring", stiffness: 300, damping: 30 } },
     open: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
@@ -72,27 +68,146 @@ const backdropVariants = {
     open: { opacity: 1 },
 };
 
-export default function Layout() {
+interface LayoutProps {
+    signOut: () => void;
+}
+
+export default function Layout({ signOut }: LayoutProps) {
+    const [version, setVersion] = useState("");
+
     const location = useLocation();
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { theme, toggleTheme } = useTheme();
 
-    // 4. Calculate Direction Logic
+    const [health, setHealth] = useState<Health | null>(null);
+    const [isHealthLoading, setIsHealthLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+
+
+    const checkHealth = useCallback(async () => {
+        setIsRefreshing(true);
+        try {
+            const healthRes = await apiCall('/q/health', undefined, "GET");
+            setHealth(healthRes);
+        } catch (error: any) {
+            if (error.status === 503 && error.data) {
+                setHealth(error.data);
+            } else {
+                console.error("Health check critical failure", error);
+                setHealth({ status: "DOWN", checks: [] });
+            }
+        } finally {
+            setIsHealthLoading(false);
+            setIsRefreshing(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        checkHealth();
+
+        invoke<string>("get_build_version")
+            .then((v) => setVersion(v || "N/A"))
+            .catch((e) => {
+                console.error("Error fetching build version:", e);
+                setVersion("N/A");
+            });
+    }, [checkHealth]);
+
     const currentIdx = getRouteIndex(location.pathname);
     const prevIdx = useRef(currentIdx);
-
-    // Determine direction
     const direction = currentIdx > prevIdx.current ? 1 : -1;
 
     useEffect(() => {
         prevIdx.current = currentIdx;
     }, [currentIdx]);
 
-    const { theme, toggleTheme } = useTheme();
+    // --- ERROR SCREEN ---
+    if (!isHealthLoading && health?.status === 'DOWN') {
+        return (
+            <div className="flex flex-col h-screen items-center justify-center bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] p-6 relative">
+                <div className="max-w-md w-full space-y-8">
+                    <div className="text-center space-y-2">
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 mb-4 ring-1 ring-red-500/20">
+                            <ShieldAlert className="w-10 h-10 text-red-500" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight">System Critical</h1>
+                        <p className="text-[hsl(var(--text-secondary))]">
+                            Essential services are offline. Functionality is limited
+                        </p>
+                    </div>
 
+                    <Card className="bg-[hsl(var(--bg-secondary))] border-red-500/30 shadow-2xl shadow-red-900/10">
+                        <CardHeader className="pb-3 border-b border-[hsl(var(--border-primary))]">
+                            <CardTitle className="text-sm font-mono uppercase tracking-wider text-[hsl(var(--text-secondary))]">Diagnostic Report</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="divide-y divide-[hsl(var(--border-primary))]">
+                                {health.checks && health.checks.length > 0 ? (
+                                    health.checks.map((check, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-4 hover:bg-[hsl(var(--bg-tertiary))]/50 transition-colors">
+                                            <span className="text-sm font-medium">{check.name}</span>
+                                            {check.status === 'UP' ? (
+                                                <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-mono font-bold px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                                    <CheckCircle size={12} /> UP
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-1.5 text-red-400 text-xs font-mono font-bold px-2 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+                                                    <XCircle size={12} /> DOWN
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-sm text-[hsl(var(--text-muted))]">
+                                        No specific diagnostic data available.
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="space-y-3">
+                        <Button
+                            onClick={checkHealth}
+                            disabled={isRefreshing}
+                            className="w-full bg-white text-black hover:bg-gray-200 h-10 font-medium"
+                        >
+                            {isRefreshing ? (
+                                <>
+                                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                    Reconnecting...
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Recheck System Status
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={signOut}
+                            className="w-full border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
+                        >
+                            Sign Out
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="absolute bottom-4 right-6 pointer-events-none select-none">
+                    <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))] opacity-50">
+                        {version}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // --- MAIN LAYOUT ---
     return (
         <div className="flex flex-col h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans overflow-hidden">
 
-            {/* --- Global Header --- */}
             <header className="flex items-center justify-between px-4 lg:px-6 py-3 bg-[hsl(var(--bg-secondary))] border-b border-[hsl(var(--border-primary))] z-30 relative">
                 <div className="flex items-center gap-3">
                     <Button
@@ -113,7 +228,6 @@ export default function Layout() {
                 </div>
 
                 <div className="flex items-center gap-4 lg:gap-8">
-                    {/* Desktop Nav */}
                     <nav className="hidden lg:flex items-center gap-6 relative">
                         <AnimatedTab to="/" label="Dashboard" />
                         <AnimatedTab to="/outposts" label="Outposts" />
@@ -144,7 +258,6 @@ export default function Layout() {
                 </div>
             </header>
 
-            {/* --- Mobile Sidebar Drawer --- */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <>
@@ -154,7 +267,7 @@ export default function Layout() {
                             exit="closed"
                             variants={backdropVariants}
                             onClick={() => setMobileMenuOpen(false)}
-                            className="fixed inset-0 bg-black/50 z-[40] lg:hidden backdrop-blur-sm"
+                            className="fixed inset-0 bg-black/50 z-[3000] lg:hidden backdrop-blur-sm"
                         />
 
                         <motion.div
@@ -162,7 +275,7 @@ export default function Layout() {
                             animate="open"
                             exit="closed"
                             variants={sidebarVariants}
-                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-[hsl(var(--bg-secondary))] border-r border-[hsl(var(--border-primary))] z-[50] lg:hidden shadow-2xl flex flex-col"
+                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-[hsl(var(--bg-secondary))] border-r border-[hsl(var(--border-primary))] z-[3000] lg:hidden shadow-2xl flex flex-col"
                         >
                             <div className="p-4 flex items-center justify-between border-b border-[hsl(var(--border-primary))]">
                                 <div className="flex items-center gap-2">
@@ -193,7 +306,6 @@ export default function Layout() {
                 )}
             </AnimatePresence>
 
-            {/* --- Page Content --- */}
             <div className="flex-1 overflow-hidden relative bg-[hsl(var(--bg-primary))]">
                 <AnimatePresence mode="popLayout" custom={direction}>
                     <motion.div
@@ -213,16 +325,18 @@ export default function Layout() {
                     </motion.div>
                 </AnimatePresence>
             </div>
+
+            <div className="fixed bottom-1 right-2 z-50 pointer-events-none select-none mix-blend-difference">
+                <p className="text-[9px] font-mono text-[hsl(var(--text-secondary))] opacity-30">
+                    {version}
+                </p>
+            </div>
         </div>
     );
 }
 
-// --- Helper Components ---
-
 function AnimatedTab({ to, label }: { to: string; label: string }) {
     const location = useLocation();
-
-    // Active state logic
     const isActive = to === "/"
         ? location.pathname === "/"
         : location.pathname.startsWith(to);
