@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-use std::iter::Map;
+use crate::config::AppConfig;
 use serde::Serialize;
 use serde_json::json;
-use tauri::{Manager, State};
+use std::collections::HashMap;
 use tauri::command;
+use tauri::{Manager, State};
 use tauri_plugin_http::reqwest::Client;
-use crate::config::AppConfig;
 
 mod config;
 
@@ -13,6 +12,12 @@ mod config;
 struct ApiResponse {
     status: u16,
     data: serde_json::Value,
+}
+
+#[command]
+async fn get_build_version(config: State<'_, AppConfig>) -> Result<String, String> {
+    let version = config.build_version.clone();
+    Ok(version)
 }
 
 #[command]
@@ -28,18 +33,13 @@ async fn proxy_request(
     let mut url = format!("{}{}", base_url, path);
 
     if let Some(params) = query_param {
-        let query_string: Vec<String> = params
-            .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect();
+        let query_string: Vec<String> =
+            params.iter().map(|(k, v)| format!("{}={}", k, v)).collect();
 
         if !query_string.is_empty() {
             url = format!("{}?{}", url, query_string.join("&"));
         }
     }
-
-    println!("Request URL: {}", url);
-    println!("Method: {}", method);
 
     let client = Client::new();
 
@@ -59,20 +59,11 @@ async fn proxy_request(
             .body(b.to_string());
     }
 
-    let response = request_builder
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+    let response = request_builder.send().await.map_err(|e| e.to_string())?;
 
     let status = response.status().as_u16();
 
-    let text = response
-        .text()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    println!("Response status: {}", status);
-    println!("Response body: {}", text);
+    let text = response.text().await.map_err(|e| e.to_string())?;
 
     let data: serde_json::Value = if text.is_empty() {
         json!(null)
@@ -83,17 +74,18 @@ async fn proxy_request(
     Ok(ApiResponse { status, data })
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_config = config::load_config();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_geolocation::init())
         .setup(move |app| {
             app.manage(app_config.clone());
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![proxy_request])
+        .plugin(tauri_plugin_geolocation::init())
+        .invoke_handler(tauri::generate_handler![proxy_request, get_build_version])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

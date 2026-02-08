@@ -1,7 +1,7 @@
 [development]
 backend_url = "http://localhost:8080"
-api_key = "dev_key_12345"
+build_version = "build_v1.0.0-Alpha"
 
 [production]
 backend_url = "https://api.production.com"
-api_key = "prod_key_67890"
+build_version = "build_v1.0.0-Alpha"
