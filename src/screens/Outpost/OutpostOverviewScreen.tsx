@@ -1,13 +1,24 @@
 import {
-    ArrowLeft, Plus, Settings, Users, Box, MapPin, Search
+    ArrowLeft, Plus, Users, Box, MapPin, Search, AlertCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { Label } from "@/components/ui/label.tsx";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog.tsx";
 import { Link, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import {apiCall} from "@/utils/api.ts";
-import {GroupSummary, OutpostSummary} from "@/models/Outpost.ts";
+import { apiCall } from "@/utils/api.ts";
+import { GroupSummary, OutpostSummary } from "@/models/Outpost.ts";
+
+const GROUP_NAME_REGEX = /^[a-zA-Z0-9:_-]{1,128}$/;
 
 export default function OutpostOverviewScreen() {
     const { outpostUuid } = useParams<{ outpostUuid: string }>();
@@ -16,11 +27,16 @@ export default function OutpostOverviewScreen() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [newGroupName, setNewGroupName] = useState("");
+    const [groupNameError, setGroupNameError] = useState<string | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                let outpostOverview: OutpostSummary = await apiCall( `/api/v1/outposts/${outpostUuid}/summary`, undefined, "GET")
+                let outpostOverview: OutpostSummary = await apiCall(`/api/v1/outposts/${outpostUuid}/summary`, undefined, "GET")
 
                 setOutpost(outpostOverview);
                 setGroups(outpostOverview.groups);
@@ -36,6 +52,47 @@ export default function OutpostOverviewScreen() {
             fetchData();
         }
     }, [outpostUuid]);
+
+    const handleCreateGroup = async () => {
+        if (!newGroupName) {
+            setGroupNameError("Group name is required.");
+            return;
+        }
+        if (!GROUP_NAME_REGEX.test(newGroupName)) {
+            setGroupNameError("Invalid format. Use alphanumeric, '-', '_', or ':'. Max 128 chars.");
+            return;
+        }
+
+        setIsCreating(true);
+        setGroupNameError(null);
+
+        try {
+            console.log(`Creating group: ${newGroupName} for outpost: ${outpost?.name}`);
+
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            const mockNewGroup: GroupSummary = {
+                groupUUID: `temp-${Date.now()}`,
+                groupName: newGroupName,
+                groupDroneCount: 0
+            };
+            setGroups([...groups, mockNewGroup]);
+
+            setIsDialogOpen(false);
+            setNewGroupName("");
+        } catch (error) {
+            console.error("Failed to create group", error);
+            setGroupNameError("Failed to create group. Please try again.");
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    const openDialog = () => {
+        setNewGroupName("");
+        setGroupNameError(null);
+        setIsDialogOpen(true);
+    };
 
     const filteredGroups = groups.filter(g =>
         g.groupName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -55,29 +112,29 @@ export default function OutpostOverviewScreen() {
                 <div className="max-w-[1400px] mx-auto p-4 lg:p-6 space-y-6">
 
                     {/* --- Header & Navigation --- */}
-                    <div className="flex items-center gap-4">
-                        <Link to="/outposts">
-                            <Button variant="ghost" size="icon" className="h-9 w-9 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-secondary))]">
-                                <ArrowLeft size={20} />
-                            </Button>
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">{outpost.name}</h1>
-                            <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] mt-1 font-mono">
-                                <MapPin size={14} />
-                                {outpost.latitude.toFixed(4)}, {outpost.longitude.toFixed(4)}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <Link to="/outposts">
+                                <Button variant="ghost" size="icon" className="h-9 w-9 -ml-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-secondary))]">
+                                    <ArrowLeft size={20} />
+                                </Button>
+                            </Link>
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight">{outpost.name}</h1>
+                                <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] mt-1 font-mono">
+                                    <MapPin size={14} />
+                                    {outpost.latitude.toFixed(4)}, {outpost.longitude.toFixed(4)}
+                                </div>
                             </div>
                         </div>
-                        <div className="ml-auto flex gap-2">
-                            <Button variant="outline" className="h-9 border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
-                                <Settings size={16} className="mr-2" />
-                                Configure
-                            </Button>
-                            <Button className="bg-white text-black hover:bg-gray-200 h-9">
-                                <Plus size={16} className="mr-2" />
-                                New Group
-                            </Button>
-                        </div>
+
+                        <Button
+                            onClick={openDialog}
+                            className="bg-white text-black hover:bg-gray-200 h-10 shadow-lg shadow-white/5"
+                        >
+                            <Plus size={16} className="mr-2" />
+                            New Group
+                        </Button>
                     </div>
 
                     {/* --- Outpost Stats / Info --- */}
@@ -166,9 +223,76 @@ export default function OutpostOverviewScreen() {
                             )}
                         </div>
                     </div>
-
                 </div>
             </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Create New Group</DialogTitle>
+                        <DialogDescription className="text-[hsl(var(--text-secondary))]">
+                            Establish a new drone fleet group for this outpost.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="outpost-name" className="text-[hsl(var(--text-secondary))]">
+                                Assigned Outpost
+                            </Label>
+                            <Input
+                                id="outpost-name"
+                                value={outpost.name}
+                                disabled
+                                className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-muted))] opacity-70 cursor-not-allowed"
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="group-name" className="text-[hsl(var(--text-secondary))]">
+                                Group Name
+                            </Label>
+                            <Input
+                                id="group-name"
+                                value={newGroupName}
+                                onChange={(e) => {
+                                    setNewGroupName(e.target.value);
+                                    if(groupNameError) setGroupNameError(null);
+                                }}
+                                placeholder="e.g. alpha-squad-01"
+                                className={`bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] ${groupNameError ? 'border-red-500' : ''}`}
+                            />
+                            {groupNameError ? (
+                                <div className="flex items-center gap-1 text-xs text-red-400 mt-1">
+                                    <AlertCircle size={12} />
+                                    <span>{groupNameError}</span>
+                                </div>
+                            ) : (
+                                <p className="text-[10px] text-[hsl(var(--text-muted))]">
+                                    Allowed: Alphanumeric, ':', '_', '-'. Max 128 chars.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDialogOpen(false)}
+                            className="border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleCreateGroup}
+                            disabled={isCreating}
+                            className="bg-white text-black hover:bg-gray-200"
+                        >
+                            {isCreating ? "Creating..." : "Create Group"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
