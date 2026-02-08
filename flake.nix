@@ -36,6 +36,8 @@
           file
           xdotool
           nodejs_24
+          just
+	  cargo-tauri
         ] ++ libraries;
 
         shellHook = ''
