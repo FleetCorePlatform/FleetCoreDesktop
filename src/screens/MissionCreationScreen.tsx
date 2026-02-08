@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import {useParams, useNavigate, useLocation} from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
 import L from "leaflet";
-import { ArrowLeft, Rocket, Map as MapIcon, ShieldCheck, Ruler } from 'lucide-react';
+import {
+    ArrowLeft, ShieldCheck, Ruler, PanelLeft, Activity, SatelliteDishIcon
+} from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
@@ -12,7 +14,8 @@ import "leaflet/dist/leaflet.css";
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-import {OutpostSummary} from "@/models/Outpost.ts";
+import { OutpostSummary } from "@/models/Outpost.ts";
+import {useTheme} from "@/ThemeProvider.tsx";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -30,33 +33,42 @@ interface OutpostData {
     boundary: Array<{ x: number; y: number }>;
 }
 
-function MapController({ bounds }: { bounds: [number, number][] }) {
+function MapController({ points }: { points: L.LatLngExpression[] }) {
     const map = useMap();
     useEffect(() => {
-        if (bounds.length > 0) {
+        if (points && points.length > 0) {
+            const bounds = L.polygon(points).getBounds();
             map.fitBounds(bounds, { padding: [50, 50] });
         }
-    }, [bounds, map]);
+    }, [points, map]);
     return null;
 }
 
 export default function MissionCreationScreen() {
     const { groupUuid } = useParams<{ groupUuid: string }>();
-
-    const outpostSummary: OutpostSummary = useLocation().state?.groupData;
-
+    const location = useLocation();
     const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(true);
+    const outpostSummary: OutpostSummary = location.state?.groupData;
     const [outpost, setOutpost] = useState<OutpostData | null>(null);
+
+    const [loading, setLoading] = useState(true);
     const [missionAltitude, setMissionAltitude] = useState([50]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const { theme } = useTheme();
+
     useEffect(() => {
         const fetchData = async () => {
+            if (!outpostSummary) {
+                navigate('/outposts');
+                return;
+            }
+
             setLoading(true);
-            // Mock API delay
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             setOutpost({
                 uuid: groupUuid || "",
@@ -68,25 +80,48 @@ export default function MissionCreationScreen() {
             setLoading(false);
         };
         fetchData();
-    }, [groupUuid]);
+    }, [groupUuid, outpostSummary, navigate]);
+
+    const polygonPositions: L.LatLngExpression[] = useMemo(() => {
+        if (!outpost?.boundary) return [];
+        return outpost.boundary.map(p => [p.x, p.y] as [number, number]);
+    }, [outpost]);
 
     const handleConfirmMission = async () => {
         if (!outpost) return;
         setIsSubmitting(true);
-
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         navigate('/missions');
     };
 
     if (loading || !outpost) {
-        return <div className="flex h-screen items-center justify-center text-[hsl(var(--text-secondary))] font-mono animate-pulse">ACQUIRING TARGET DATA...</div>;
+        return <div className="flex h-screen items-center justify-center bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] font-mono animate-pulse">Acquiring outpost data...</div>;
     }
 
     return (
-        <div className="flex h-full flex-col md:flex-row bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))]">
+        <div className="flex h-screen flex-col md:flex-row bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] overflow-hidden">
+
+            {/* --- Mobile Backdrop --- */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-[1400] md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
 
             {/* --- Left Sidebar: Confirmation Details --- */}
-            <div className="w-full md:w-96 border-r border-[hsl(var(--border-primary))] flex flex-col bg-[hsl(var(--bg-secondary))] z-10 shadow-xl">
+            <aside className={`
+                fixed md:relative
+                inset-y-0 left-0
+                w-[85vw] md:w-96
+                border-r border-[hsl(var(--border-primary))] 
+                flex flex-col 
+                bg-[hsl(var(--bg-secondary))] 
+                z-[1500] md:z-10 
+                shadow-2xl
+                transition-transform duration-300 ease-in-out
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
                 <div className="p-4 border-b border-[hsl(var(--border-primary))]">
                     <div className="flex items-center gap-2 mb-4">
                         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8 -ml-2 text-[hsl(var(--text-secondary))]">
@@ -96,7 +131,7 @@ export default function MissionCreationScreen() {
                     </div>
                     <div className="flex items-center justify-between text-xs font-mono text-[hsl(var(--text-muted))]">
                         <span>TARGET: <span className="text-[hsl(var(--text-primary))]">{outpost.name}</span></span>
-                        <Badge variant="outline" className="text-emerald-400 border-emerald-500/20 bg-emerald-500/10">READY</Badge>
+                        <Badge variant="outline" className="text-emerald-400 border-emerald-500/20 bg-emerald-500/10">Ready</Badge>
                     </div>
                 </div>
 
@@ -122,14 +157,7 @@ export default function MissionCreationScreen() {
                                 <div className="text-sm">
                                     <p className="font-medium">Area Coverage</p>
                                     <p className="text-[hsl(var(--text-muted))] text-xs font-mono">
-                                        ~{outpostSummary.area && outpostSummary.area.points.length >= 3 && (
-                                        <>
-                                            ~{(
-                                            Math.abs(outpostSummary.area.points[0].x - outpostSummary.area.points[2].x) * 111 *
-                                            Math.abs(outpostSummary.area.points[0].y - outpostSummary.area.points[1].y) * 111
-                                        ).toFixed(2)} km²
-                                        </>
-                                    )} km²
+                                        Configured Boundary
                                     </p>
                                 </div>
                             </div>
@@ -168,43 +196,48 @@ export default function MissionCreationScreen() {
                 {/* Footer Action */}
                 <div className="p-4 border-t border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-secondary))]">
                     <Button
-                        className="w-full h-12 text-md font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+                        className="w-full h-12 text-md bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]"
                         onClick={handleConfirmMission}
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? (
-                            "INITIALIZING..."
+                            <><Activity className="animate-spin mr-2 h-4 w-4" /> Initializing...</>
                         ) : (
                             <>
-                                <Rocket className="mr-2 h-4 w-4" />
-                                CONFIRM LAUNCH
+                                <SatelliteDishIcon className="mr-1 h-8 w-8" />
+                                Confirm mission
                             </>
                         )}
                     </Button>
                 </div>
-            </div>
+            </aside>
 
-            <div className="flex-1 relative h-[50vh] md:h-full bg-gray-900">
+            {/* --- Right Side: Map Visualization --- */}
+            <div className="flex-1 relative bg-gray-900 h-full">
                 <MapContainer
                     center={[outpost.latitude, outpost.longitude]}
                     zoom={13}
                     style={{ height: "100%", width: "100%" }}
-                    className="z-0"
+                    className="z-0 bg-[#0B0D10]"
                     zoomControl={false}
-                    dragging={false}
-                    scrollWheelZoom={false}
-                    doubleClickZoom={false}
+                    dragging={true}
                 >
-                    <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                        attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    />
 
-                    {/* @ts-ignore */}
-                    <MapController bounds={outpostSummary.area.points.map(p => [p.y, p.x] as [number, number])} />
+                    {theme == "light" ?
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution="&COPY OpenStreetMap"
+                        /> :
+                        <TileLayer
+                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                            attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+                        />
+                    }
 
-                    {/* @ts-ignore */}
-                    <Polygon positions={outpostSummary.area.points.map(p => [p.y, p.x] as [number, number])}
+                    <MapController points={polygonPositions} />
+
+                    <Polygon
+                        positions={polygonPositions}
                         pathOptions={{
                             color: '#3b82f6',
                             fillColor: '#3b82f6',
@@ -214,6 +247,16 @@ export default function MissionCreationScreen() {
                         }}
                     />
                 </MapContainer>
+
+                {/* --- MOBILE: Sidebar Toggle Button --- */}
+                <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute top-4 left-4 z-[1000] md:hidden shadow-xl bg-[hsl(var(--bg-tertiary))] border border-[hsl(var(--border-primary))]"
+                    onClick={() => setSidebarOpen(true)}
+                >
+                    <PanelLeft size={20} />
+                </Button>
 
                 {/* HUD Overlay */}
                 <div className="absolute top-6 right-6 z-[400] flex flex-col items-end gap-2 pointer-events-none">
