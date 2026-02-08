@@ -16,11 +16,9 @@ type AuthStep = 'LOGIN' | 'NEW_PASSWORD';
 export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     const [step, setStep] = useState<AuthStep>('LOGIN');
 
-    // Login State
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    // New Password State
     const [newPassword, setNewPassword] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");

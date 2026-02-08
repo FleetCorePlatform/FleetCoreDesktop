@@ -1,7 +1,7 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { getCurrentUser, signOut, fetchUserAttributes } from "aws-amplify/auth";
+import {getCurrentUser, signOut, fetchUserAttributes, fetchAuthSession} from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 
 import { ThemeProvider } from "@/ThemeProvider.tsx";
@@ -15,6 +15,7 @@ import OutpostOverviewScreen from "@/screens/Outpost/OutpostOverviewScreen.tsx";
 import GroupOverviewScreen from "@/screens/Group/GroupOverviewScreen.tsx";
 import MissionCreationScreen from "@/screens/MissionCreationScreen.tsx";
 import CoordinatorProfileScreen, { Coordinator } from "./screens/ProfileScreen";
+import OutpostEditScreen from "@/screens/Outpost/OutpostEditScreen.tsx";
 
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -52,12 +53,17 @@ export default function App() {
 
     async function loadProfile(user: any) {
         try {
+            const { tokens } = await fetchAuthSession();
             const attributes = await fetchUserAttributes();
+
+            const groupsClaim = tokens?.accessToken?.payload['cognito:groups'];
+            const groups = Array.isArray(groupsClaim) ? (groupsClaim as string[]) : [];
             setProfile({
                 uuid: user.userId || user.username,
                 email: attributes.email || user.username,
                 firstName: attributes.given_name || 'Coordinator',
-                lastName: attributes.family_name || 'User'
+                lastName: attributes.family_name || 'User',
+                groups: Array.isArray(groups) ? groups : []
             });
         } catch (e) {
             console.error("Failed to load attributes", e);
@@ -74,7 +80,6 @@ export default function App() {
         }
     }
 
-    // 2. Loading State (Prevent flicker)
     if (isAuthChecking) {
         return (
             <ThemeProvider>
@@ -85,19 +90,17 @@ export default function App() {
         );
     }
 
-    // 3. Unauthenticated State
     if (!isAuthenticated) {
         return (
             <ThemeProvider>
                 <LoginScreen onLoginSuccess={() => {
                     setIsAuthenticated(true);
-                    checkSession(); // Re-fetch attributes
+                    checkSession();
                 }} />
             </ThemeProvider>
         );
     }
 
-    // 4. Authenticated State
     return (
         <ThemeProvider>
             <BrowserRouter>
@@ -107,6 +110,7 @@ export default function App() {
                         <Route path="/outposts" element={<OutpostListScreen />} />
                         <Route path="/outposts/new" element={<OutpostCreationScreen />} />
                         <Route path="/outposts/:outpostUuid" element={<OutpostOverviewScreen />} />
+                        <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
                         <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
                         <Route path="/missions/new/:groupUUID" element={<MissionCreationScreen />} />
                         <Route path="/profile" element={<CoordinatorProfileScreen profile={profile} />} />
