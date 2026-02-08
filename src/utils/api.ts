@@ -6,6 +6,17 @@ interface ApiResponse {
     data: any;
 }
 
+class ApiError extends Error {
+    status: number;
+    data: any;
+    constructor(message: string, status: number, data: any) {
+        super(message);
+        this.status = status;
+        this.data = data;
+        Object.setPrototypeOf(this, ApiError.prototype);
+    }
+}
+
 export async function apiCall(
     path: string,
     queryParam?: Record<string, string>,
@@ -35,7 +46,11 @@ export async function apiCall(
 
         if (response.status >= 400) {
             console.error("API Error:", response.status, response.data);
-            throw new Error(`Request failed with status ${response.status}`);
+            throw new ApiError(
+                `Request failed with status ${response.status}`,
+                response.status,
+                response.data
+            );
         }
 
         return response.data;
