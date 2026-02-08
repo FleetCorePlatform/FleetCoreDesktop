@@ -1,0 +1,47 @@
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { invoke } from '@tauri-apps/api/core';
+
+interface ApiResponse {
+    status: number;
+    data: any;
+}
+
+export async function apiCall(
+    path: string,
+    queryParam?: Record<string, string>,
+    method: string = 'GET',
+    body?: any
+) {
+    try {
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString();
+
+        if (!token) {
+            throw new Error("No active session");
+        }
+
+        const args: any = {
+            path,
+            query_param: queryParam || null,
+            method,
+            token,
+        };
+
+        if (body) {
+            args.body = body;
+        }
+
+        const response = await invoke<ApiResponse>('proxy_request', args);
+
+        if (response.status >= 400) {
+            console.error("API Error:", response.status, response.data);
+            throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        return response.data;
+
+    } catch (error) {
+        console.error("Bridge Error:", error);
+        throw error;
+    }
+}
