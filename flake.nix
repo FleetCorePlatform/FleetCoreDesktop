@@ -7,24 +7,33 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-
-      libraries = with pkgs; [
-        webkitgtk_4_1
-        gtk3
-        cairo
-        gdk-pixbuf
-        glib
-        dbus
-        openssl
-        librsvg
-        libayatana-appindicator
-        libsoup_3
-        libcanberra-gtk3
-        mesa
-        glib-networking
-      ];
     in {
       devShells.${system}.default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          webkitgtk_4_1
+          gtk3
+          cairo
+          gdk-pixbuf
+          glib
+          dbus
+          openssl
+          librsvg
+          libayatana-appindicator
+          libsoup_3
+          libcanberra-gtk3
+          mesa
+          glib-networking
+          libpulseaudio
+          alsa-lib
+        ] ++ (with pkgs.gst_all_1; [
+          gstreamer
+          gst-plugins-base
+          gst-plugins-good
+          gst-plugins-bad
+          gst-plugins-ugly
+          gst-libav
+        ]);
+
         packages = with pkgs; [
           pkg-config
           rustup
@@ -37,11 +46,20 @@
           xdotool
           nodejs_24
           just
-	  cargo-tauri
-        ] ++ libraries;
+          cargo-tauri
+        ];
 
         shellHook = ''
-          export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=/run/opengl-driver/lib:${pkgs.lib.makeLibraryPath (with pkgs; [
+            webkitgtk_4_1 gtk3 cairo gdk-pixbuf glib dbus openssl librsvg
+            libayatana-appindicator libsoup_3 libcanberra-gtk3 mesa glib-networking
+            libpulseaudio alsa-lib
+          ] ++ (with pkgs.gst_all_1; [
+            gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav
+          ]))}:$LD_LIBRARY_PATH
+
+          export GST_PLUGIN_SYSTEM_PATH_1_0=${pkgs.gst_all_1.gstreamer}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-libav}/lib/gstreamer-1.0
+
           export WEBKIT_DISABLE_COMPOSITING_MODE=1
           export WEBKIT_DISABLE_DMABUF_RENDERER=1
           export GDK_BACKEND=x11
