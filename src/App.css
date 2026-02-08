@@ -3,6 +3,32 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  :root {
+    --bg-primary: 240 11% 96%;
+    --bg-secondary: 240 10% 92%;
+    --bg-tertiary: 240 8% 88%;
+    --border-primary: 240 6% 80%;
+    --border-secondary: 240 5% 74%;
+    --text-primary: 240 10% 4%;
+    --text-secondary: 240 5% 45%;
+    --text-muted: 240 4% 65%;
+    --accent: 217 91% 60%;
+  }
+
+  .dark {
+    --bg-primary: 222 16% 7%;
+    --bg-secondary: 222 15% 9%;
+    --bg-tertiary: 222 13% 12%;
+    --border-primary: 222 10% 24%;
+    --border-secondary: 222 8% 32%;
+    --text-primary: 0 0% 100%;
+    --text-secondary: 218 15% 63%;
+    --text-muted: 218 10% 50%;
+    --accent: 217 91% 60%;
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
