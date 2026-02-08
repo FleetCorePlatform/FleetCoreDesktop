@@ -1,8 +1,8 @@
 [package]
 name = "fleetcore-desktop"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "FleetCore Drone system management software"
+authors = ["Levente Hagymasi"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -29,3 +29,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tauri-plugin-http = "2"
+toml = "0.9.11+spec-1.1.0"
+reqwest = { version = "0.13.2", features = ["json", "blocking"] }
+tokio = "1.49.0"
