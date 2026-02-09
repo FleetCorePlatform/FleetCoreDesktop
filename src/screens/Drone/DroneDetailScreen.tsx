@@ -1,5 +1,5 @@
 import {Canvas, useFrame} from "@react-three/fiber";
-import { useGLTF, Stage, PresentationControls, Html } from "@react-three/drei";
+import { useGLTF, PresentationControls, Html } from "@react-three/drei";
 import {Suspense, useEffect, useRef, useState} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -14,30 +14,34 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import * as THREE from 'three'
 
-export function DroneModel(props: any) {
-    const { nodes, materials } = useGLTF('/models/x500-draco-transformed.glb') as any
+export function DroneModel() {
+    const { nodes } = useGLTF('/models/typhoon.model.glb')
     const meshRef = useRef<THREE.Mesh>(null)
+
+        useEffect(() => {
+        if (meshRef.current) {
+            meshRef.current.matrixAutoUpdate = false
+            meshRef.current.updateMatrix()
+        }
+    }, [])
 
     useFrame((state, delta) => {
         if (meshRef.current) {
             meshRef.current.rotation.y += delta * 0.05
+            meshRef.current.updateMatrix()
         }
     })
 
     return (
-        <group {...props} dispose={null}>
-            <mesh
-                ref={meshRef}
-                geometry={nodes.mesh_0.geometry}
-                material={nodes.mesh_0.material}
-                castShadow
-                receiveShadow
-            />
-        </group>
+        <mesh
+            ref={meshRef}
+            geometry={nodes.mesh_0.geometry}
+            material={nodes.mesh_0.material}
+        />
     )
 }
 
-useGLTF.preload("/models/x500-draco.glb");
+useGLTF.preload("/models/typhoon.model.glb");
 
 function Loader() {
     return (
@@ -114,15 +118,21 @@ export default function DroneDetailsScreen() {
 
                     <Canvas
                         shadows
-                        dpr={[1, 1.5]}
+                        dpr={[1, 1]}
                         camera={{ fov: 45, position: [0, 0, 4] }}
-                        gl={{ preserveDrawingBuffer: true }}
+                        gl={{
+                            antialias: false,
+                            powerPreference: "high-performance",
+                            stencil: false,
+                            depth: true
+                        }}
                     >
                         <Suspense fallback={<Loader />}>
                             <PresentationControls speed={1.5} global zoom={0.7} polar={[-0.1, Math.PI / 4]}>
-                                <Stage environment="city" intensity={0.6} castShadow={false} shadows={false}>
-                                    <DroneModel scale={0.01} />
-                                </Stage>
+                                <ambientLight intensity={0.5} />
+                                <directionalLight position={[10, 10, 5]} intensity={1} />
+
+                                <DroneModel />
                             </PresentationControls>
                         </Suspense>
                     </Canvas>
