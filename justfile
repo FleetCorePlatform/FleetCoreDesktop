@@ -67,3 +67,6 @@ test:
 # Create installer
 bundle:
     cargo tauri build --bundles deb rpm
+
+mock openapi_yaml="api.yaml" port="8080" *args="":
+    npx @stoplight/prism-cli mock -d {{ openapi_yaml }} -p {{ port }} {{ args }}
