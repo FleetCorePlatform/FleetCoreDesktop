@@ -1,7 +1,7 @@
 import {
     ArrowLeft, Plus, Settings, Battery, Signal,
     Trash2, AlertTriangle, Plane,
-    Network, Server, Cpu, MapPin, Crosshair, Camera
+    Network, Server, Cpu, MapPin, Crosshair, Camera, Info
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.tsx";
@@ -500,6 +500,14 @@ export default function GroupOverviewScreen() {
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end" className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]">
+                                                                <DropdownMenuItem
+                                                                    onClick={() => navigate(`/drones/${drone.uuid}`)}
+                                                                    className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
+                                                                >
+                                                                    <Info className="mr-2 h-4 w-4" />
+                                                                    Get Details
+                                                                </DropdownMenuItem>
+
                                                                 <DropdownMenuItem onClick={() => openEditModal(drone, 'address')} className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]">
                                                                     Change Address
                                                                 </DropdownMenuItem>
