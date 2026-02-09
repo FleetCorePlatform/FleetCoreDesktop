@@ -1,7 +1,8 @@
 import {
     ArrowLeft, Plus, Settings, Battery, Signal,
     Trash2, AlertTriangle, Plane,
-    Network, Server, Cpu, MapPin, Crosshair, Camera, Info
+    Network, Server, Cpu, MapPin, Crosshair, Camera, Info, ScanEye, ArrowUpRightFromSquareIcon, Pen, Edit, Edit2,
+    Edit3Icon, Edit2Icon
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.tsx";
@@ -47,6 +48,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import {EditControl} from "react-leaflet-draw";
+import {ChangePassword} from "@aws-amplify/ui-react/dist/types/components/AccountSettings/ChangePassword";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -490,24 +493,25 @@ export default function GroupOverviewScreen() {
                                                             className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
                                                             title="View Camera Feed"
                                                         >
-                                                            <Camera size={14} />
+                                                            <ScanEye size={14} />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/drones/${drone.uuid}`)}
+                                                            className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
+                                                            title="View details"
+                                                        >
+                                                            <ArrowUpRightFromSquareIcon size={14} />
                                                         </Button>
 
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
-                                                                    <Settings size={14} />
+                                                                <Button title="Edit properties" variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
+                                                                    <Edit size={14} />
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end" className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]">
-                                                                <DropdownMenuItem
-                                                                    onClick={() => navigate(`/drones/${drone.uuid}`)}
-                                                                    className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
-                                                                >
-                                                                    <Info className="mr-2 h-4 w-4" />
-                                                                    Get Details
-                                                                </DropdownMenuItem>
-
                                                                 <DropdownMenuItem onClick={() => openEditModal(drone, 'address')} className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]">
                                                                     Change Address
                                                                 </DropdownMenuItem>
@@ -523,7 +527,7 @@ export default function GroupOverviewScreen() {
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
 
-                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-red-400 hover:bg-red-400/10">
+                                                        <Button title="Decomission drone" variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-red-400 hover:bg-red-400/10">
                                                             <Trash2 size={14} />
                                                         </Button>
                                                     </div>

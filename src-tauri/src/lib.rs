@@ -78,7 +78,6 @@ pub fn run() {
     let app_config = config::load_config();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_geolocation::init())
         .setup(move |app| {
             app.manage(app_config.clone());
             Ok(())

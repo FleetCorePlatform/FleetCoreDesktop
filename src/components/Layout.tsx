@@ -25,18 +25,22 @@ interface Health {
 
 const getRouteIndex = (pathname: string) => {
     if (pathname === "/") return 0;
+
+    if (pathname.startsWith("/drones/")) return 4;
     if (pathname.startsWith("/drones")) return 1;
+
     if (pathname.startsWith("/outposts")) {
         if (pathname === "/outposts") return 2.0;
         if (pathname === "/outposts/new") return 2.1;
         return 2.2;
     }
     if (pathname.startsWith("/groups")) return 3;
+
     if (pathname.startsWith("/missions")) {
-        if (pathname.includes("/new")) return 4.1;
-        return 4.0;
+        if (pathname.includes("/new")) return 5.1;
+        return 5.0;
     }
-    if (pathname.startsWith("/profile")) return 5;
+    if (pathname.startsWith("/profile")) return 6;
     return 0;
 };
 
