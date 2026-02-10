@@ -291,8 +291,6 @@ function OutpostMapPreview({ outpost }: { outpost: Outpost }) {
     );
 }
 
-// --- Subcomponents ---
-
 function StatsCard({ title, value, icon, subtext, color = "text-[#135bec]" }: any) {
     return (
         <Card className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))]">

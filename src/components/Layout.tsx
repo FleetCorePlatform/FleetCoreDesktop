@@ -126,7 +126,6 @@ export default function Layout({ signOut }: LayoutProps) {
         prevIdx.current = currentIdx;
     }, [currentIdx]);
 
-    // --- ERROR SCREEN ---
     if (!isHealthLoading && health?.status === 'DOWN') {
         return (
             <div className="flex flex-col h-screen items-center justify-center bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] p-6 relative">
@@ -208,7 +207,6 @@ export default function Layout({ signOut }: LayoutProps) {
         );
     }
 
-    // --- MAIN LAYOUT ---
     return (
         <div className="flex flex-col h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans overflow-hidden">
 

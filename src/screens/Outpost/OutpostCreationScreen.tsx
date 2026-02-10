@@ -17,7 +17,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {useTheme} from "@/ThemeProvider.tsx";
 import {apiCall} from "@/utils/api.ts";
 import {CreateOutpostBody} from "@/models/Outpost.ts";
-import {useUser} from "@/context/UserContext.ts";
 
 const calculateArea = (latLngs: L.LatLng[]): number => {
     if (latLngs.length < 3) return 0;
