@@ -60,7 +60,6 @@ async fn proxy_request(
     }
 
     let response = request_builder.send().await.map_err(|e| e.to_string())?;
-
     let status = response.status().as_u16();
 
     let text = response.text().await.map_err(|e| e.to_string())?;
@@ -68,7 +67,10 @@ async fn proxy_request(
     let data: serde_json::Value = if text.is_empty() {
         json!(null)
     } else {
-        serde_json::from_str(&text).map_err(|e| e.to_string())?
+        match serde_json::from_str(&text) {
+            Ok(json) => json,
+            Err(_) => json!(text),
+        }
     };
 
     Ok(ApiResponse { status, data })
