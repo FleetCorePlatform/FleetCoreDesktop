@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, PresentationControls, Html, Environment, Stage } from "@react-three/drei";
-import { Suspense, useEffect, useState, useMemo, memo } from "react";
+import { Suspense, useEffect, useState, useMemo, memo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -10,16 +10,17 @@ import {
     ArrowLeft, Cpu, Wifi, Shield,
     Camera, Navigation, Thermometer,
     Zap, AlertCircle, MapPin, Box, Terminal,
-    Activity, Clock, Server, FileText
+    Activity, Clock, Server, FileText, Pause
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { apiCall } from "@/utils/api.ts";
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-import {useTheme} from "@/ThemeProvider.tsx";
+import { useTheme } from "@/ThemeProvider.tsx";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -41,10 +42,91 @@ interface Drone {
     capabilities: Array<string>;
 }
 
+interface TerminalEntry {
+    type: "command" | "output" | "error";
+    content: string;
+}
+
 const AVAILABLE_MODELS = ["x500", "typhoon"];
 const DEFAULT_MODEL = "x500";
 
 AVAILABLE_MODELS.forEach(model => useGLTF.preload(`/models/${model}.model.glb`));
+
+const CommanderConsole = ({ droneName, droneId }: { droneName: string, droneId: string }) => {
+    const [logs, setLogs] = useState<TerminalEntry[]>([
+        { type: "output", content: `[SYSTEM] MAVSDK Server initialized on port 50051` },
+        { type: "output", content: `[LINK] Waiting for heartbeat from ${droneId.split('-')[0]}...` },
+        { type: "output", content: `[LINK] Heartbeat detected (MAVLink v2)` },
+        { type: "output", content: `[PARAM] Requesting parameters... OK` },
+    ]);
+    const [input, setInput] = useState("");
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }, [logs]);
+
+    const handleCommand = (cmd: string) => {
+        if(!cmd.trim()) return;
+
+        const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+        setLogs(prev => [...prev, { type: "command", content: `[${timestamp}] > ${cmd.toUpperCase()}` }]);
+
+        setTimeout(() => {
+            setLogs(prev => [...prev, { type: "output", content: `[ACK] Command accepted: ${cmd.split(' ')[0]}` }]);
+        }, 200);
+
+        setInput("");
+    };
+
+    return (
+        <div className="flex flex-col h-[600px] w-full bg-[#09090b] text-zinc-300 font-mono text-xs overflow-hidden border border-zinc-800 rounded-lg shadow-2xl">
+
+            <div className="h-12 bg-zinc-900/50 border-b border-zinc-800 flex items-center justify-between px-4 select-none shrink-0">
+                <div className="flex items-center gap-3 mr-2">
+                    <div className="p-1.5 bg-amber-500/10 rounded border border-amber-500/20">
+                        <Terminal size={12} className="text-amber-500" />
+                    </div>
+                    <span className="mt-[0.2em] font-bold text-zinc-100 tracking-wide uppercase">{droneName}</span>
+                </div>
+            </div>
+
+            {/* Full Width Terminal */}
+            <div className="flex-1 flex flex-col bg-[#050505] relative overflow-hidden">
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                     style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+                </div>
+
+                {/* Scrollable Logs */}
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[11px] z-10 scrollbar-thin scrollbar-thumb-zinc-800">
+                    {logs.map((log, i) => (
+                        <div key={i} className={`flex gap-2 ${log.type === 'command' ? 'text-amber-500' : 'text-zinc-400'}`}>
+                            <span className="opacity-30 select-none w-[30px] text-right">
+                                {(i + 1).toString().padStart(3, '0')}
+                            </span>
+                            <span>{log.content}</span>
+                        </div>
+                    ))}
+                    <div className="h-4" />
+                </div>
+            </div>
+
+            {/* Input */}
+            <div className="h-10 bg-zinc-900 border-t border-zinc-800 flex items-center px-2 gap-2 shrink-0">
+                <span className="text-amber-500 px-2 text-xs font-bold">MAV{'>'}</span>
+                <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCommand(input)}
+                    className="flex-1 bg-transparent border-none outline-none text-xs text-zinc-300 placeholder-zinc-700 font-mono h-full"
+                    placeholder="Enter MAVLink command (e.g., 'commander takeoff')"
+                    autoFocus
+                />
+            </div>
+        </div>
+    );
+};
 
 const DroneModel = memo(({ model }: { model: string }) => {
     const safeModel = AVAILABLE_MODELS.includes(model) ? model : DEFAULT_MODEL;
@@ -103,6 +185,8 @@ export default function DroneDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [isConsoleOpen, setIsConsoleOpen] = useState(false);
+
     const { theme } = useTheme();
 
     useEffect(() => {
@@ -111,7 +195,6 @@ export default function DroneDetailsScreen() {
             setLoading(true);
             try {
                 const data = await apiCall(`/api/v1/drones/${droneUuid}`, undefined, "GET");
-                console.log(data);
                 setDrone(data);
             } catch (e) {
                 console.error("Error fetching drone:", e);
@@ -190,13 +273,27 @@ export default function DroneDetailsScreen() {
                             <Button variant="outline" className="border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))]">
                                 <FileText size={16} className="mr-2" /> Logs
                             </Button>
-                            <Button className="bg-white text-black hover:bg-gray-200">
-                                <Terminal size={16} className="mr-2" /> Console
-                            </Button>
+
+                            {/* --- Console Modal --- */}
+                            <Dialog open={isConsoleOpen} onOpenChange={setIsConsoleOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300">
+                                        <Terminal size={16} className="mr-2" />
+                                        <span className="font-mono">Console</span>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-5xl bg-zinc-950 p-0 border-zinc-800 shadow-2xl">
+                                    <DialogHeader className="sr-only">
+                                        <DialogTitle>MAVLink Commander</DialogTitle>
+                                    </DialogHeader>
+                                    <CommanderConsole droneName={drone.name} droneId={drone.uuid} />
+                                </DialogContent>
+                            </Dialog>
+
                         </div>
                     </div>
 
-                    {/* --- Main Content Grid --- */}
+                    {/* Main Content Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         <div className="lg:col-span-2 space-y-6">
@@ -207,12 +304,48 @@ export default function DroneDetailsScreen() {
                                         <Box size={16} className="text-[hsl(var(--text-secondary))]" />
                                         <span className="font-medium text-sm">Digital Twin</span>
                                     </div>
-                                    <Badge variant="secondary" className="font-mono text-[10px] text-[hsl(var(--text-muted))]">
-                                        LIVE RENDER
+                                    <Badge
+                                        variant="secondary"
+                                        className={`font-mono text-[10px] transition-colors duration-300 ${
+                                            isConsoleOpen
+                                                ? "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20"
+                                                : "text-[hsl(var(--text-muted))]"
+                                        }`}
+                                    >
+                                        {isConsoleOpen ? "SUSPENDED" : "LIVE RENDER"}
                                     </Badge>
                                 </CardHeader>
-                                <div className="h-[450px] w-full bg-[hsl(var(--bg-tertiary))]">
-                                    <DroneVisualizer modelName={drone.model} />
+
+                                <div className="h-[450px] w-full bg-[hsl(var(--bg-tertiary))] relative">
+                                    {isConsoleOpen ? (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--bg-tertiary))] z-10">
+                                            {/* Logo / Icon Container */}
+                                            <div className="relative group cursor-default">
+                                                <div className="absolute -inset-4 bg-[hsl(var(--primary))] rounded-full opacity-0 group-hover:opacity-10 animate-pulse transition-opacity duration-700"></div>
+
+                                                <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] shadow-xl">
+                                                    <Pause
+                                                        size={32}
+                                                        className="text-[hsl(var(--text-secondary))]"
+                                                        fill="currentColor"
+                                                        fillOpacity={0.1}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Text Label */}
+                                            <div className="mt-6 flex flex-col items-center gap-1.5">
+                                                <span className="text-xs font-bold tracking-[0.2em] text-[hsl(var(--text-secondary))] uppercase">
+                                                    Render Paused
+                                                </span>
+                                                <span className="text-[10px] font-mono text-[hsl(var(--text-muted))]">
+                                                    Resources allocated to Terminal
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <DroneVisualizer modelName={drone.model} />
+                                    )}
                                 </div>
                             </Card>
 
@@ -248,6 +381,7 @@ export default function DroneDetailsScreen() {
                             </div>
                         </div>
 
+                        {/* Right Column (Map & Capabilities) - Unchanged */}
                         <div className="space-y-6">
 
                             {/* Map Card */}
