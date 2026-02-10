@@ -2,7 +2,7 @@ import {
     ArrowLeft, Plus, Settings, Battery, Signal,
     Trash2, AlertTriangle, Plane,
     Network, Server, Cpu, MapPin, Crosshair, Camera, Info, ScanEye, ArrowUpRightFromSquareIcon, Pen, Edit, Edit2,
-    Edit3Icon, Edit2Icon
+    Edit3Icon, Edit2Icon, Cog, SeparatorHorizontal, Construction
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.tsx";
@@ -20,7 +20,7 @@ import {
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
+    DropdownMenuItem, DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import {
@@ -50,6 +50,7 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import {EditControl} from "react-leaflet-draw";
 import {ChangePassword} from "@aws-amplify/ui-react/dist/types/components/AccountSettings/ChangePassword";
+import {Separator} from "radix-ui";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -508,10 +509,10 @@ export default function GroupOverviewScreen() {
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
                                                                 <Button title="Edit properties" variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
-                                                                    <Edit size={14} />
+                                                                    <Cog size={14} />
                                                                 </Button>
                                                             </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]">
+                                                            <DropdownMenuContent align="end" className="w-56 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]">
                                                                 <DropdownMenuItem onClick={() => openEditModal(drone, 'address')} className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]">
                                                                     Change Address
                                                                 </DropdownMenuItem>
@@ -524,12 +525,27 @@ export default function GroupOverviewScreen() {
                                                                 <DropdownMenuItem onClick={() => openEditModal(drone, 'group')} className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]">
                                                                     Change Group
                                                                 </DropdownMenuItem>
+
+                                                                <DropdownMenuSeparator className="bg-[hsl(var(--border-primary))]/50 my-1" />
+
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {}}
+                                                                    className="cursor-pointer text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 flex items-center gap-2"
+                                                                >
+                                                                    <Construction size={14} />
+                                                                    <span>Register maintenance</span>
+                                                                </DropdownMenuItem>
+
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {}}
+                                                                    className="cursor-pointer text-red-500 focus:text-red-400 focus:bg-red-500/10 flex items-center gap-2"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                    <span>Decommission drone</span>
+                                                                </DropdownMenuItem>
+
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
-
-                                                        <Button title="Decomission drone" variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-red-400 hover:bg-red-400/10">
-                                                            <Trash2 size={14} />
-                                                        </Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
