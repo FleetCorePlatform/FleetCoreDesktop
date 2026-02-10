@@ -60,13 +60,17 @@
 
           export GST_PLUGIN_SYSTEM_PATH_1_0=${pkgs.gst_all_1.gstreamer}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-libav}/lib/gstreamer-1.0
 
-          export WEBKIT_DISABLE_COMPOSITING_MODE=1
-          export WEBKIT_DISABLE_DMABUF_RENDERER=1
+          if ! command -v nvidia-smi >/dev/null 2>&1
+          then
+              export WEBKIT_DISABLE_COMPOSITING_MODE=1
+              export WEBKIT_DISABLE_DMABUF_RENDERER=1
+              export LIBGL_ALWAYS_SOFTWARE=1
+          fi
+
           export GDK_BACKEND=x11
           export GTK_PATH=${pkgs.libcanberra-gtk3}/lib/gtk-3.0:$GTK_PATH
           export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules/"
           export XDG_DATA_DIRS=${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS
-          export LIBGL_ALWAYS_SOFTWARE=1
         '';
       };
     };
