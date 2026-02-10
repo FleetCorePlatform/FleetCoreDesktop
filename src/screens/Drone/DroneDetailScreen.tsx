@@ -19,6 +19,7 @@ import { apiCall } from "@/utils/api.ts";
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import {useTheme} from "@/ThemeProvider.tsx";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -102,12 +103,15 @@ export default function DroneDetailsScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { theme } = useTheme();
+
     useEffect(() => {
         if (!droneUuid) return;
         const fetchDrone = async () => {
             setLoading(true);
             try {
                 const data = await apiCall(`/api/v1/drones/${droneUuid}`, undefined, "GET");
+                console.log(data);
                 setDrone(data);
             } catch (e) {
                 console.error("Error fetching drone:", e);
@@ -177,7 +181,7 @@ export default function DroneDetailsScreen() {
                                 <div className="flex items-center gap-3 text-sm text-[hsl(var(--text-secondary))] mt-1 font-mono">
                                     <span>UUID: {drone.uuid.split('-')[0]}...</span>
                                     <span className="w-1 h-1 rounded-full bg-[hsl(var(--text-muted))]" />
-                                    <span>MODEL: {drone.model.toUpperCase()}</span>
+                                    <span className="uppercase" >MODEL: {drone.model}</span>
                                 </div>
                             </div>
                         </div>
@@ -262,9 +266,16 @@ export default function DroneDetailsScreen() {
                                         zoomControl={false}
                                         attributionControl={false}
                                     >
-                                        <TileLayer
-                                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                                        />
+                                        {theme == "light" ?
+                                            <TileLayer
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                attribution="&COPY OpenStreetMap"
+                                            /> :
+                                            <TileLayer
+                                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                                                attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+                                            />
+                                        }
                                         <Marker position={position}>
                                             <Popup className="text-xs">{drone.address}</Popup>
                                         </Marker>
