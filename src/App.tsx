@@ -17,6 +17,8 @@ import MissionCreationScreen from "@/screens/MissionCreationScreen.tsx";
 import CoordinatorProfileScreen, { Coordinator } from "./screens/ProfileScreen";
 import OutpostEditScreen from "@/screens/Outpost/OutpostEditScreen.tsx";
 import DroneDetailsScreen from "@/screens/Drone/DroneDetailScreen.tsx";
+import {UserProvider} from "@/context/UserContext.ts";
+import MissionHistoryScreen from "@/screens/Mission/MissionHistoryScreen.tsx";
 
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -104,22 +106,25 @@ export default function App() {
 
     return (
         <ThemeProvider>
-            <BrowserRouter>
-                <Routes>
-                    <Route element={<Layout signOut={handleSignOut} />}>
-                        <Route path="/" element={<DashboardScreen />} />
-                        <Route path="/outposts" element={<OutpostListScreen />} />
-                        <Route path="/outposts/new" element={<OutpostCreationScreen />} />
-                        <Route path="/outposts/:outpostUuid" element={<OutpostOverviewScreen />} />
-                        <Route path="/drones/:droneUuid" element={<DroneDetailsScreen />} />
-                        <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
-                        <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
-                        <Route path="/missions/new/:groupUUID" element={<MissionCreationScreen />} />
-                        <Route path="/profile" element={<CoordinatorProfileScreen profile={profile} />} />
-                    </Route>
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </BrowserRouter>
+            <UserProvider value={{ user: profile, isAuthenticated }}>
+                <BrowserRouter>
+                    <Routes>
+                        <Route element={<Layout signOut={handleSignOut} />}>
+                            <Route path="/" element={<DashboardScreen />} />
+                            <Route path="/outposts" element={<OutpostListScreen />} />
+                            <Route path="/outposts/new" element={<OutpostCreationScreen />} />
+                            <Route path="/outposts/:outpostUuid" element={<OutpostOverviewScreen />} />
+                            <Route path="/drones/:droneUuid" element={<DroneDetailsScreen />} />
+                            <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
+                            <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
+                            <Route path="/missions/new/:groupUUID" element={<MissionCreationScreen />} />
+                            <Route path="/missions/:groupUUID" element={<MissionHistoryScreen />} />
+                            <Route path="/profile" element={<CoordinatorProfileScreen profile={profile} />} />
+                        </Route>
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </BrowserRouter>
+            </UserProvider>
         </ThemeProvider>
     );
 }
