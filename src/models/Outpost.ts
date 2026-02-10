@@ -6,6 +6,7 @@ interface GroupSummary {
 
 interface OutpostSummary {
     name: string
+    uuid: string,
     latitude: number,
     longitude: number,
     createdAt: string,
@@ -15,4 +16,20 @@ interface OutpostSummary {
     };
 }
 
-export type {OutpostSummary, GroupSummary};
+interface Point {
+    x: number,
+    y: number
+}
+
+interface Area {
+    points: Array<Point>
+}
+
+interface CreateOutpostBody {
+    name: string,
+    latitude: number,
+    longitude: number,
+    area: Area
+}
+
+export type {OutpostSummary, GroupSummary, CreateOutpostBody};
