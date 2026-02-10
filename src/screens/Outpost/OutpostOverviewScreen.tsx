@@ -1,5 +1,5 @@
 import {
-    ArrowLeft, Plus, Users, Box, MapPin, Search, AlertCircle
+    ArrowLeft, Plus, Users, Box, MapPin, Search, AlertCircle, History, ArrowRight
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
@@ -66,26 +66,24 @@ export default function OutpostOverviewScreen() {
         setIsCreating(true);
         setGroupNameError(null);
 
-        try {
-            console.log(`Creating group: ${newGroupName} for outpost: ${outpost?.name}`);
-
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            const mockNewGroup: GroupSummary = {
-                groupUUID: `temp-${Date.now()}`,
-                groupName: newGroupName,
-                groupDroneCount: 0
-            };
-            setGroups([...groups, mockNewGroup]);
-
-            setIsDialogOpen(false);
-            setNewGroupName("");
-        } catch (error) {
-            console.error("Failed to create group", error);
-            setGroupNameError("Failed to create group. Please try again.");
-        } finally {
-            setIsCreating(false);
+        const payload: CreateGroupBody = {
+            // @ts-ignore
+            outpost_uuid: outpost?.uuid,
+            group_name: newGroupName,
         }
+
+        await apiCall("/api/v1/groups", undefined, "POST", payload)
+            .then(() => {
+                setIsDialogOpen(false);
+                setNewGroupName("");
+            })
+            .catch(e => {
+                console.error("Failed to create group", e);
+                setGroupNameError("Failed to create group. Please try again.");
+            })
+            .finally(() => {
+                setIsCreating(false);
+            });
     };
 
     const openDialog = () => {
@@ -167,7 +165,12 @@ export default function OutpostOverviewScreen() {
                             <CardContent className="p-5">
                                 <p className="text-xs font-medium text-[hsl(var(--text-secondary))] uppercase mb-2">Created At</p>
                                 <p className="text-sm text-[hsl(var(--text-muted))] leading-relaxed">
-                                    {outpost.createdAt}
+                                    {new Date(outpost.createdAt).toLocaleDateString("en-US", {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                    })}
                                 </p>
                             </CardContent>
                         </Card>
@@ -201,15 +204,22 @@ export default function OutpostOverviewScreen() {
                                             <Box size={16} className="mr-2" />
                                             {group.groupDroneCount} Drones Assigned
                                         </div>
-                                        <div className="flex justify-end mt-4 gap-2">
+                                        <div className="grid grid-cols-2 gap-2 mt-4 w-full">
+                                            <Link to={`/missions/${group.groupUUID}`}>
+                                                <Button variant="outline" size="sm" className="w-full text-xs h-7 border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--bg-tertiary))]">
+                                                    <History className="mr-1 h-3 w-3" /> Missions
+                                                </Button>
+                                            </Link>
+
                                             <Link to={`/missions/new/${group.groupUUID}`} state={{ groupData: outpost }}>
-                                                <Button variant="outline" size="sm" className="text-xs h-7 border-[hsl(var(--border-primary))] text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/50">
+                                                <Button variant="outline" size="sm" className="w-full text-xs h-7 border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--bg-tertiary))]">
                                                     <Plus className="mr-1 h-3 w-3" /> New Mission
                                                 </Button>
                                             </Link>
-                                            <Link to={`/groups/${group.groupUUID}/${outpostUuid}`}>
-                                                <Button variant="ghost" size="sm" className="text-xs h-7 text-[hsl(var(--text-secondary))] hover:text-white">
-                                                    Manage Group <ArrowLeft className="ml-1 h-3 w-3 rotate-180" />
+
+                                            <Link to={`/groups/${group.groupUUID}/${outpostUuid}`} className="col-span-2">
+                                                <Button variant="outline" size="sm" className="w-full text-xs h-7 border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--bg-tertiary))]">
+                                                    <ArrowRight className="mr-1 h-3 w-3" /> Manage Group
                                                 </Button>
                                             </Link>
                                         </div>
