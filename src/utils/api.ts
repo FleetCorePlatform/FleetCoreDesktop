@@ -33,7 +33,7 @@ export async function apiCall(
 
         const args: any = {
             path,
-            query_param: queryParam || null,
+            queryParam: queryParam,
             method,
             token,
         };

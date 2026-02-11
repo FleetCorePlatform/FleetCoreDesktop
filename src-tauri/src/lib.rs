@@ -4,7 +4,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use tauri::command;
 use tauri::{Manager, State};
-use tauri_plugin_http::reqwest::Client;
+use reqwest::Client;
 
 mod config;
 
@@ -30,16 +30,7 @@ async fn proxy_request(
     config: State<'_, AppConfig>,
 ) -> Result<ApiResponse, String> {
     let base_url = &config.backend_url;
-    let mut url = format!("{}{}", base_url, path);
-
-    if let Some(params) = query_param {
-        let query_string: Vec<String> =
-            params.iter().map(|(k, v)| format!("{}={}", k, v)).collect();
-
-        if !query_string.is_empty() {
-            url = format!("{}?{}", url, query_string.join("&"));
-        }
-    }
+    let url = format!("{}{}", base_url, path);
 
     let client = Client::new();
 
@@ -48,18 +39,25 @@ async fn proxy_request(
         "POST" => client.post(&url),
         "PUT" => client.put(&url),
         "DELETE" => client.delete(&url),
+        "PATCH" => client.patch(&url),
         _ => return Err("Invalid method".to_string()),
     };
 
     request_builder = request_builder.header("Authorization", format!("Bearer {}", token));
 
+    if let Some(params) = query_param {
+        request_builder = request_builder.query(&params);
+    }
+
     if let Some(b) = body {
         request_builder = request_builder
             .header("Content-Type", "application/json")
-            .body(b.to_string());
+            .json(&b);
     }
 
-    let response = request_builder.send().await.map_err(|e| e.to_string())?;
+    let request = request_builder.build().map_err(|e| e.to_string())?;
+
+    let response = client.execute(request).await.map_err(|e| e.to_string())?;
     let status = response.status().as_u16();
 
     let text = response.text().await.map_err(|e| e.to_string())?;
