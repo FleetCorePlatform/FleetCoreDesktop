@@ -2,7 +2,7 @@ import {
     ArrowLeft, Plus, Settings, Battery, Signal,
     Trash2, AlertTriangle, Plane,
     Network, Server, Cpu, MapPin, Crosshair, Camera, Info, ScanEye, ArrowUpRightFromSquareIcon, Pen, Edit, Edit2,
-    Edit3Icon, Edit2Icon, Cog, SeparatorHorizontal, Construction
+    Edit3Icon, Edit2Icon, Cog, SeparatorHorizontal, Construction, Drone, SlidersHorizontal
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.tsx";
@@ -370,10 +370,6 @@ export default function GroupOverviewScreen() {
                                         {(groupUuid || "").substring(0, 8)}
                                     </Badge>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] mt-1">
-                                    <Server size={14} />
-                                    <span>Assigned to Outpost: {(outpostUuid || "").substring(0, 8)}</span>
-                                </div>
                             </div>
                         </div>
 
@@ -406,7 +402,7 @@ export default function GroupOverviewScreen() {
                                     <h3 className="text-2xl font-bold mt-1">{drones.length}</h3>
                                 </div>
                                 <div className="p-2 bg-[hsl(var(--bg-tertiary))] rounded-lg text-white/70">
-                                    <Plane size={20} />
+                                    <Drone size={20} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -554,7 +550,7 @@ export default function GroupOverviewScreen() {
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
                                                                 <Button title="Edit properties" variant="ghost" size="sm" className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
-                                                                    <Cog size={14} />
+                                                                    <SlidersHorizontal size={14} />
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end" className="w-56 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]">
@@ -576,6 +572,7 @@ export default function GroupOverviewScreen() {
                                                                 <DropdownMenuItem
                                                                     onClick={() => openMaintenanceModal(drone)}
                                                                     className="cursor-pointer text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 flex items-center gap-2"
+                                                                    disabled={drone.maintenance}
                                                                 >
                                                                     <Construction size={14} />
                                                                     <span>Register maintenance</span>

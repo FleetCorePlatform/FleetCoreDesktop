@@ -1,5 +1,5 @@
 import {
-    ArrowLeft, Plus, Users, Box, MapPin, Search, AlertCircle, History, ArrowRight
+    ArrowLeft, Plus, Users, Box, MapPin, Search, AlertCircle, History, ArrowRight, Wrench, Drone
 } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
@@ -13,7 +13,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog.tsx";
-import { Link, useParams } from "react-router-dom";
+import {Link, useNavigate, useParams} from "react-router-dom";
 import { useState, useEffect } from "react";
 import { apiCall } from "@/utils/api.ts";
 import { GroupSummary, OutpostSummary } from "@/models/Outpost.ts";
@@ -31,6 +31,8 @@ export default function OutpostOverviewScreen() {
     const [newGroupName, setNewGroupName] = useState("");
     const [groupNameError, setGroupNameError] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+
+    const navigate = useNavigate()
 
     useEffect(() => {
         const fetchData = async () => {
@@ -83,6 +85,7 @@ export default function OutpostOverviewScreen() {
             })
             .finally(() => {
                 setIsCreating(false);
+                navigate(0);
             });
     };
 
@@ -109,6 +112,7 @@ export default function OutpostOverviewScreen() {
             <div className="flex-1 overflow-auto">
                 <div className="max-w-[1400px] mx-auto p-4 lg:p-6 space-y-6">
 
+
                     {/* --- Header & Navigation --- */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -126,13 +130,22 @@ export default function OutpostOverviewScreen() {
                             </div>
                         </div>
 
-                        <Button
-                            onClick={openDialog}
-                            className="bg-white text-black hover:bg-gray-200 h-10 shadow-lg shadow-white/5"
-                        >
-                            <Plus size={16} className="mr-2" />
-                            New Group
-                        </Button>
+                        <div className="flex gap-2">
+                            <Link to={`/maintenance/${outpostUuid}`}>
+                                <Button variant="outline" className="bg-[hsl(var(--bg-secondary))] text-[hsl(var(--text-primary))] h-10 border-[hsl(var(--border-primary))]">
+                                    <Wrench size={16} className="mr-2" />
+                                    Maintenances
+                                </Button>
+                            </Link>
+
+                            <Button
+                                onClick={openDialog}
+                                className="bg-white text-black hover:bg-gray-200 h-10 shadow-lg shadow-white/5"
+                            >
+                                <Plus size={16} className="mr-2" />
+                                New Group
+                            </Button>
+                        </div>
                     </div>
 
                     {/* --- Outpost Stats / Info --- */}
@@ -157,7 +170,7 @@ export default function OutpostOverviewScreen() {
                                     </h3>
                                 </div>
                                 <div className="p-2 bg-[hsl(var(--bg-tertiary))] rounded-lg text-emerald-400">
-                                    <Box size={24} />
+                                    <Drone size={24} />
                                 </div>
                             </CardContent>
                         </Card>
