@@ -6,14 +6,15 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {apiCall} from "@/utils/api.ts";
 
 interface Mission {
-    missionUUID: string;
     name: string;
-    status: 'COMPLETED' | 'IN_PROGRESS' | 'FAILED' | 'PENDING' | 'ABORTED';
+    missionUuid: string;
     startTime: string;
     endTime?: string;
     detectionCount: number;
+    status: 'COMPLETED' | 'IN_PROGRESS' | 'FAILED' | 'PENDING' | 'ABORTED' | undefined;
 }
 
 export default function MissionHistoryScreen() {
@@ -27,48 +28,18 @@ export default function MissionHistoryScreen() {
         const fetchMissions = async () => {
             setIsLoading(true);
 
-            // TODO: Change mock to API fetched data
-            const mockData: Mission[] = [
-                {
-                    missionUUID: "mis-gamma-003",
-                    name: "Active Response",
-                    status: 'IN_PROGRESS',
-                    startTime: new Date().toISOString(),
-                    detectionCount: 1
-                },
-                {
-                    missionUUID: "mis-alpha-001",
-                    name: "Sector 7 Night Sweep",
-                    status: 'COMPLETED',
-                    startTime: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                    endTime: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-                    detectionCount: 5
-                },
-                {
-                    missionUUID: "mis-beta-002",
-                    name: "Routine Perimeter Check",
-                    status: 'COMPLETED',
-                    startTime: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-                    endTime: new Date(Date.now() - 1000 * 60 * 60 * 23.5).toISOString(),
-                    detectionCount: 0
-                },
-                {
-                    missionUUID: "mis-delta-004",
-                    name: "Aborted Patrol",
-                    status: 'ABORTED',
-                    startTime: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-                    endTime: new Date(Date.now() - 1000 * 60 * 60 * 47.9).toISOString(),
-                    detectionCount: 0
-                },
-            ];
+            console.log(groupUuid);
 
-            setTimeout(() => {
-                const sorted = mockData.sort((a, b) =>
-                    new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-                );
-                setMissions(sorted);
-                setIsLoading(false);
-            }, 600);
+            await apiCall("/api/v1/missions", {"group_uuid": groupUuid || ""}, "GET")
+                .then(res => {
+                    const sorted = res.sort((a: { startTime: string | number | Date; }, b: { startTime: string | number | Date; }) =>
+                        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                    );
+                    setMissions(sorted);
+                }).catch(e => {
+                    console.log("Error while fetching missions: ", e);
+                    setMissions([])
+                }).finally(() => setIsLoading(false))
         };
 
         fetchMissions();
@@ -150,7 +121,7 @@ export default function MissionHistoryScreen() {
                                 new Date(missions[index - 1].startTime).getDate() !== new Date(mission.startTime).getDate();
 
                             return (
-                                <div key={mission.missionUUID} className="relative pl-8 group">
+                                <div key={mission.missionUuid} className="relative pl-8 group">
                                     {/* Timeline Node */}
                                     <div className={`absolute -left-[5px] top-6 h-2.5 w-2.5 rounded-full border-2 border-[hsl(var(--bg-primary))] z-10 transition-colors duration-300
                                         ${isLive ? 'bg-blue-500 animate-pulse ring-4 ring-blue-500/20' :
@@ -174,9 +145,8 @@ export default function MissionHistoryScreen() {
                                     >
                                         <div className="flex flex-col sm:flex-row">
 
-                                            {/* Left: Info */}
+                                            {/* Left info */}
                                             <div className="p-4 flex-1">
-                                                {/* Header Row: Name + Badge */}
                                                 <div className="flex justify-between items-start gap-3">
                                                     <div className="min-w-0">
                                                         <h3 className={`font-bold text-sm truncate ${hasThreats ? 'text-red-100' : 'text-[hsl(var(--text-primary))]'}`}>
@@ -219,7 +189,7 @@ export default function MissionHistoryScreen() {
 
                                                 {/* Action Button */}
                                                 {hasThreats ? (
-                                                    <Link to={`/detections/${groupUuid}/${mission.missionUUID}`}>
+                                                    <Link to={`/detections/${groupUuid}/${mission.missionUuid}`}>
                                                         <Button
                                                             size="sm"
                                                             className="w-full h-7 text-xs bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 hover:text-red-300 shadow-none"
