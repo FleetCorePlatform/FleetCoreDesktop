@@ -13,12 +13,14 @@ import OutpostListScreen from "@/screens/Outpost/OutpostScreen.tsx";
 import OutpostCreationScreen from "./screens/Outpost/OutpostCreationScreen.tsx";
 import OutpostOverviewScreen from "@/screens/Outpost/OutpostOverviewScreen.tsx";
 import GroupOverviewScreen from "@/screens/Group/GroupOverviewScreen.tsx";
-import MissionCreationScreen from "@/screens/MissionCreationScreen.tsx";
+import MissionCreationScreen from "@/screens/Mission/MissionCreationScreen.tsx";
 import CoordinatorProfileScreen, { Coordinator } from "./screens/ProfileScreen";
 import OutpostEditScreen from "@/screens/Outpost/OutpostEditScreen.tsx";
 import DroneDetailsScreen from "@/screens/Drone/DroneDetailScreen.tsx";
 import {UserProvider} from "@/context/UserContext.ts";
 import MissionHistoryScreen from "@/screens/Mission/MissionHistoryScreen.tsx";
+import MaintenanceScreen from "@/screens/MaintenanceScreen.tsx";
+import DetectionReviewScreen from "@/screens/Mission/MissionDetectionsScreen.tsx";
 
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -114,11 +116,13 @@ export default function App() {
                             <Route path="/outposts" element={<OutpostListScreen />} />
                             <Route path="/outposts/new" element={<OutpostCreationScreen />} />
                             <Route path="/outposts/:outpostUuid" element={<OutpostOverviewScreen />} />
+                            <Route path="/maintenance/:outpostUuid" element={<MaintenanceScreen />} />
                             <Route path="/drones/:droneUuid" element={<DroneDetailsScreen />} />
                             <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
                             <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
                             <Route path="/missions/new/:groupUUID" element={<MissionCreationScreen />} />
-                            <Route path="/missions/:groupUUID" element={<MissionHistoryScreen />} />
+                            <Route path="/missions/:groupUuid" element={<MissionHistoryScreen />} />
+                            <Route path="/detections/:groupUuid/:missionUuid" element={<DetectionReviewScreen />} />
                             <Route path="/profile" element={<CoordinatorProfileScreen profile={profile} />} />
                         </Route>
                         <Route path="*" element={<Navigate to="/" replace />} />
