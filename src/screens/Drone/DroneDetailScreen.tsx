@@ -257,9 +257,6 @@ export default function DroneDetailsScreen() {
                             <div>
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-2xl tracking-tight">{drone.name}</h1>
-                                    <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 bg-emerald-500/10 gap-1">
-                                        <Activity size={12} className="animate-pulse" /> ONLINE
-                                    </Badge>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-[hsl(var(--text-secondary))] mt-1 font-mono">
                                     <span>UUID: {drone.uuid.split('-')[0]}...</span>
