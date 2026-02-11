@@ -133,6 +133,51 @@ export default function GroupOverviewScreen() {
     const [streamActive, setStreamActive] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
 
+    const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
+    const [maintenanceDrone, setMaintenanceDrone] = useState<DroneSummaryModel | null>(null);
+    const [maintenanceForm, setMaintenanceForm] = useState({
+        type: 'Routine Inspection',
+        description: ''
+    });
+    const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+
+    const MAINTENANCE_TYPES = [
+        "Routine Inspection",
+        "Firmware Update",
+        "Motor Repair",
+        "Sensor Calibration",
+        "Battery Replacement",
+        "Structural Repair"
+    ];
+
+    const openMaintenanceModal = (drone: DroneSummaryModel) => {
+        setMaintenanceDrone(drone);
+        setMaintenanceForm({ type: MAINTENANCE_TYPES[0], description: '' });
+        setIsMaintenanceOpen(true);
+    };
+
+    const handleCreateMaintenance = async () => {
+        if (!maintenanceDrone || !maintenanceForm.description) return;
+
+        setMaintenanceLoading(true);
+        try {
+            await apiCall('/api/v1/maintenance', undefined, "POST", {
+                droneUuid: maintenanceDrone.uuid,
+                type: maintenanceForm.type,
+                description: maintenanceForm.description
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            setIsMaintenanceOpen(false);
+            navigate(`/maintenance/${outpostUuid}`);
+        } catch (e) {
+            console.error("Failed to create maintenance record", e);
+        } finally {
+            setMaintenanceLoading(false);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -529,7 +574,7 @@ export default function GroupOverviewScreen() {
                                                                 <DropdownMenuSeparator className="bg-[hsl(var(--border-primary))]/50 my-1" />
 
                                                                 <DropdownMenuItem
-                                                                    onClick={() => {}}
+                                                                    onClick={() => openMaintenanceModal(drone)}
                                                                     className="cursor-pointer text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 flex items-center gap-2"
                                                                 >
                                                                     <Construction size={14} />
@@ -557,6 +602,94 @@ export default function GroupOverviewScreen() {
                     </Card>
                 </div>
             </div>
+
+            {/* --- Create Maintenance Dialog --- */}
+            <Dialog open={isMaintenanceOpen} onOpenChange={setIsMaintenanceOpen}>
+                <DialogContent className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Construction size={18} className="text-amber-500" />
+                            Schedule Maintenance
+                        </DialogTitle>
+                        <DialogDescription className="text-[hsl(var(--text-secondary))]">
+                            Create a new maintenance ticket for <span className="font-mono font-medium text-[hsl(var(--text-primary))]">{maintenanceDrone?.name}</span>.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-5 py-4">
+                        {/* Drone Info */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs text-[hsl(var(--text-muted))]">Target Drone</Label>
+                                <div className="text-sm font-medium border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))]/50 px-3 py-2 rounded-md">
+                                    {maintenanceDrone?.name}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs text-[hsl(var(--text-muted))]">UUID</Label>
+                                <div className="text-sm font-mono border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))]/50 px-3 py-2 rounded-md truncate">
+                                    {maintenanceDrone?.uuid}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Maintenance Type */}
+                        <div className="space-y-2">
+                            <Label htmlFor="maint-type">Maintenance Type</Label>
+                            <Select
+                                value={maintenanceForm.type}
+                                onValueChange={(val) => setMaintenanceForm({...maintenanceForm, type: val})}
+                            >
+                                <SelectTrigger id="maint-type" className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))]">
+                                    <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))]">
+                                    {MAINTENANCE_TYPES.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <Label htmlFor="maint-desc">Description & Notes</Label>
+                            <textarea
+                                id="maint-desc"
+                                className="flex min-h-[100px] w-full rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))] px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="Describe the issue or required task..."
+                                value={maintenanceForm.description}
+                                onChange={(e) => setMaintenanceForm({...maintenanceForm, description: e.target.value})}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsMaintenanceOpen(false)}
+                            disabled={maintenanceLoading}
+                            className="border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleCreateMaintenance}
+                            disabled={maintenanceLoading || !maintenanceForm.description}
+                            className="bg-amber-600 text-white hover:bg-amber-700"
+                        >
+                            {maintenanceLoading ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                    Creating...
+                                </span>
+                            ) : (
+                                "Create Ticket"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* --- Registration Dialog --- */}
             <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
