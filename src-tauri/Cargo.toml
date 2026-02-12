@@ -34,3 +34,5 @@ toml = "0.8"
 reqwest = { version = "0.13.2", features = ["json", "blocking", "query"] }
 tokio = "1.49.0"
 tauri-plugin-geolocation = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"

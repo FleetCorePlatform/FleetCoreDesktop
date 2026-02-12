@@ -1,10 +1,10 @@
 use crate::config::AppConfig;
+use reqwest::Client;
 use serde::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
 use tauri::command;
 use tauri::{Manager, State};
-use reqwest::Client;
 
 mod config;
 
@@ -78,6 +78,8 @@ pub fn run() {
     let app_config = config::load_config();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(move |app| {
             app.manage(app_config.clone());
             Ok(())
