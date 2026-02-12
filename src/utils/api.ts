@@ -17,12 +17,22 @@ class ApiError extends Error {
     }
 }
 
-export async function apiCall(
+export async function apiCall<T>(
     path: string,
     queryParam?: Record<string, string>,
     method: string = 'GET',
-    body?: any
-) {
+    body?: any,
+): Promise<T> {
+    const res = await apiCallFull<T>(path, queryParam, method, body);
+    return res.data;
+}
+
+export async function apiCallFull<T>(
+    path: string,
+    queryParam?: Record<string, string>,
+    method: string = 'GET',
+    body?: any,
+): Promise<{data: T, status: number}> {
     try {
         const session = await fetchAuthSession();
         const token = session.tokens?.idToken?.toString();
@@ -33,7 +43,7 @@ export async function apiCall(
 
         const args: any = {
             path,
-            queryParam: queryParam,
+            queryParam,
             method,
             token,
         };
@@ -53,8 +63,7 @@ export async function apiCall(
             );
         }
 
-        return response.data;
-
+        return { data: response.data, status: response.status };
     } catch (error) {
         console.error("Bridge Error:", error);
         throw error;
