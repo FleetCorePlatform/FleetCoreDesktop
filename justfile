@@ -1,20 +1,11 @@
 # Development
-dev:
-    cargo tauri dev
+dev target="":
+    cargo tauri {{ target }} dev
 
 # Build for production
-build:
-    cargo tauri build
-
-# Build for specific platform
-build-mac:
-    cargo tauri build --target aarch64-apple-darwin
-
-build-windows:
-    cargo tauri build --target x86_64-pc-windows-msvc
-
-build-linux:
-    cargo tauri build --target x86_64-unknown-linux-gnu
+[arg("target", help="Platform: mac, windows, linux, android, ios, current")]
+build target="default":
+    cargo tauri {{ if target == "mac" { "build --target aarch64-apple-darwin" } else if target == "windows" { "build --target x86_64-pc-windows-msvc" } else if target == "linux" { "build --target x86_64-unknown-linux-gnu" } else if target == "android" { "android build --apk true" } else if target == "ios" { "ios build" } else if target == "default" { "build" } else { error("Unsuported platform") } }}
 
 # Frontend only
 dev-frontend:
@@ -31,6 +22,7 @@ check-rust:
     cd src-tauri && cargo check
 
 # Clean build artifacts
+[confirm("Are you sure you want to clean everything?")]
 clean:
     cd src-tauri && cargo clean
     rm -rf dist/
