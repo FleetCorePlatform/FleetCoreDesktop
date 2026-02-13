@@ -49,23 +49,23 @@ export default function App() {
     async function checkSession() {
         try {
             const user = await getCurrentUser();
-
             const session = await fetchAuthSession();
 
-            if (session.credentials) {
-                setCredentials({
-                    accessKeyId: session.credentials.accessKeyId,
-                    secretAccessKey: session.credentials.secretAccessKey,
-                    sessionToken: session.credentials.sessionToken,
-                });
+            if (!session.credentials) {
+                throw new Error("No credentials in session");
             }
 
-            await loadProfile(user, session);
+            setCredentials({
+                accessKeyId: session.credentials.accessKeyId,
+                secretAccessKey: session.credentials.secretAccessKey,
+                sessionToken: session.credentials.sessionToken,
+            });
 
-            setIsAuthenticated(!!user);
+            await loadProfile(user, session);
+            setIsAuthenticated(true);
         } catch (error) {
-            console.error("Session check failed", error);
-            handleSignOutLocal();
+            console.error("Session invalid", error);
+            handleSignOut();
         } finally {
             setIsAuthChecking(false);
         }
@@ -127,7 +127,7 @@ export default function App() {
 
     return (
         <ThemeProvider>
-            <UserProvider value={{ user: profile, credentials, isAuthenticated }}>
+            <UserProvider value={{ user: profile, credentials: credentials, isAuthenticated: isAuthenticated }}>
                 <BrowserRouter>
                     <Routes>
                         <Route element={<Layout signOut={handleSignOut} />}>

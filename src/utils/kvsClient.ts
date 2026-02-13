@@ -3,7 +3,7 @@ import { KinesisVideoClient, DescribeSignalingChannelCommand, GetSignalingChanne
 import { KinesisVideoSignalingClient, GetIceServerConfigCommand } from "@aws-sdk/client-kinesis-video-signaling";
 import {UserCredentials} from "@/models/User.ts";
 
-interface ViewerHandle {
+export interface ViewerHandle {
     signalingClient: SignalingClient;
     peerConnection: RTCPeerConnection;
 }
@@ -79,7 +79,21 @@ export async function startViewer(
         }
     });
 
-    const peerConnection = new RTCPeerConnection({
+    console.log("WebRTC Debug:", {
+        RTCPeerConnection: typeof window.RTCPeerConnection !== 'undefined',
+        webkitRTCPeerConnection: typeof (window as any).webkitRTCPeerConnection !== 'undefined',
+        isSecureContext: window.isSecureContext,
+        mediaDevices: !!navigator.mediaDevices,
+        userAgent: navigator.userAgent
+    });
+
+    const PeerConnectionClass = window.RTCPeerConnection || (window as any).webkitRTCPeerConnection;
+    if (!PeerConnectionClass) {
+        throw new Error("RTCPeerConnection is not supported in this environment. Check GStreamer plugins (bad, nice) and Hardware Acceleration.");
+    }
+
+
+    const peerConnection = new PeerConnectionClass({
         iceServers: iceServers,
         iceTransportPolicy: 'all'
     });
@@ -99,9 +113,9 @@ export async function startViewer(
     });
 
     peerConnection.ontrack = (event) => {
-        console.log("Track received:", event.streams[0]);
         if (videoElement.srcObject !== event.streams[0]) {
             videoElement.srcObject = event.streams[0];
+            videoElement.play().catch(e => console.error("Autoplay prevented", e));
         }
     };
 
@@ -154,4 +168,11 @@ export async function startViewer(
     signalingClient.open();
 
     return { signalingClient, peerConnection };
+}
+
+export function stopViewer(handle: ViewerHandle | null) {
+    if (!handle) return;
+    handle.signalingClient.close();
+    handle.peerConnection.close();
+    console.log("WebRTC Resources Released");
 }
