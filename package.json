@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.14.0",
+    "@aws-sdk/client-kinesis-video": "^3.989.0",
+    "@aws-sdk/client-kinesis-video-signaling": "^3.989.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -30,6 +32,7 @@
     "@types/leaflet-draw": "^1.0.13",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "amazon-kinesis-video-streams-webrtc": "^2.5.0",
     "aws-amplify": "^6.16.2",
     "axios": "^1.13.4",
     "class-variance-authority": "^0.7.1",
