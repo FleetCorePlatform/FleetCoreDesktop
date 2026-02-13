@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import path from "path"
 import react from "@vitejs/plugin-react";
 import tailwindcss from '@tailwindcss/vite'
+import {nodePolyfills} from "vite-plugin-node-polyfills";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
@@ -12,11 +13,20 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [
       react(),
-      tailwindcss()
+      tailwindcss(),
+      nodePolyfills({
+          globals: {
+              Buffer: true,
+              global: true,
+              process: true,
+          },
+          protocolImports: true,
+      }),
   ],
   resolve: {
     alias: {
         "@": path.resolve(__dirname, "./src"),
+        "stream": "stream-browserify",
       },
     },
 
