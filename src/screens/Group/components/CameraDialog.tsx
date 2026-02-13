@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Camera, Signal } from 'lucide-react';
+import {useAuth} from "@aws-amplify/ui-react/internal";
+import {useUser} from "@/context/UserContext.ts";
 
 interface CameraDialogProps {
     open: boolean;
@@ -14,6 +16,7 @@ interface CameraDialogProps {
 export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
     const [streamActive, setStreamActive] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const { user, credentials } = useUser();
 
     useEffect(() => {
         if (open && videoRef.current) {

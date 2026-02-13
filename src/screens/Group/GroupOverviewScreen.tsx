@@ -230,34 +230,34 @@ export default function GroupOverviewScreen() {
         setIsDialogOpen(true);
     };
 
-    const handleSaveEdit = async () => {
-        if (!editingDrone || !editField) return;
-
-        if (editField === 'address') {
-            if (!PUBLIC_IP_REGEX.test(editValue)) {
-                setError("Invalid Public IP Address (Private ranges not allowed).");
-                return;
-            }
-        }
-
-        let payload: PatchDroneRequestModel = {
-            groupName: editField === 'group' ? editValue : editingDrone.group_name,
-            droneName: editField === 'name' ? editValue : editingDrone.name,
-            address: editField === 'address' ? editValue : editingDrone.address,
-            agentVersion: editField === 'version' ? editValue : editingDrone.manager_version,
-        }
-
-        apiCallFull(`/api/v1/drones/${editingDrone.uuid || ""}`, undefined, "PATCH", payload)
-            .then(res => {
-                if (res.status === 204) {
-                    navigate(0);
+        const handleSaveEdit = async () => {
+            if (!editingDrone || !editField) return;
+    
+            if (editField === 'address') {
+                if (!PUBLIC_IP_REGEX.test(editValue)) {
+                    setError("Invalid Public IP Address (Private ranges not allowed).");
+                    return;
                 }
-            })
-            .catch(e => {
-                console.log("Error while updating drone: ", e);
-                setIsDialogOpen(false);
-            })
-    };
+            }
+    
+            let payload: PatchDroneRequestModel = {
+                groupName: editField === 'group' ? editValue : editingDrone.group_name,
+                droneName: editField === 'name' ? editValue : editingDrone.name,
+                address: editField === 'address' ? editValue : editingDrone.address,
+                agentVersion: editField === 'version' ? editValue : editingDrone.manager_version,
+            }
+    
+            apiCallFull(`/api/v1/drones/${editingDrone.uuid || ""}`, undefined, "PATCH", payload)
+                .then(res => {
+                    if (res.status === 204) {
+                        navigate(0);
+                    }
+                })
+                .catch(e => {
+                    console.log("Error while updating drone: ", e);
+                    setIsDialogOpen(false);
+                })
+        };
 
     const openCamera = (drone: DroneSummaryModel) => {
         setCameraDrone(drone);

@@ -1,7 +1,7 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import {getCurrentUser, signOut, fetchUserAttributes, fetchAuthSession} from "aws-amplify/auth";
+import { getCurrentUser, signOut, fetchUserAttributes, fetchAuthSession } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 
 import { ThemeProvider } from "@/ThemeProvider.tsx";
@@ -9,23 +9,26 @@ import Layout from "./components/Layout";
 import LoginScreen from "./screens/LoginScreen";
 
 import DashboardScreen from "./screens/DashboardScreen";
+
+import { UserProvider } from "@/context/UserContext.ts";
+import CoordinatorProfileScreen, { Coordinator } from "./screens/ProfileScreen";
+import { UserCredentials } from "@/models/User.ts";
 import OutpostListScreen from "@/screens/Outpost/OutpostScreen.tsx";
-import OutpostCreationScreen from "./screens/Outpost/OutpostCreationScreen.tsx";
+import OutpostCreationScreen from "@/screens/Outpost/OutpostCreationScreen.tsx";
 import OutpostOverviewScreen from "@/screens/Outpost/OutpostOverviewScreen.tsx";
+import MaintenanceScreen from "@/screens/MaintenanceScreen.tsx";
+import DroneDetailsScreen from "@/screens/Drone/DroneDetailScreen.tsx";
+import OutpostEditScreen from "@/screens/Outpost/OutpostEditScreen.tsx";
 import GroupOverviewScreen from "@/screens/Group/GroupOverviewScreen.tsx";
 import MissionCreationScreen from "@/screens/Mission/MissionCreationScreen.tsx";
-import CoordinatorProfileScreen, { Coordinator } from "./screens/ProfileScreen";
-import OutpostEditScreen from "@/screens/Outpost/OutpostEditScreen.tsx";
-import DroneDetailsScreen from "@/screens/Drone/DroneDetailScreen.tsx";
-import {UserProvider} from "@/context/UserContext.ts";
 import MissionHistoryScreen from "@/screens/Mission/MissionHistoryScreen.tsx";
-import MaintenanceScreen from "@/screens/MaintenanceScreen.tsx";
 import DetectionReviewScreen from "@/screens/Mission/MissionDetectionsScreen.tsx";
 
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
     const [profile, setProfile] = useState<Coordinator | null>(null);
+    const [credentials, setCredentials] = useState<UserCredentials | null>(null);
 
     useEffect(() => {
         checkSession();
@@ -36,8 +39,7 @@ export default function App() {
                 checkSession();
             }
             if (payload.event === 'signedOut') {
-                setIsAuthenticated(false);
-                setProfile(null);
+                handleSignOutLocal();
             }
         });
 
@@ -47,22 +49,34 @@ export default function App() {
     async function checkSession() {
         try {
             const user = await getCurrentUser();
+
+            const session = await fetchAuthSession();
+
+            if (session.credentials) {
+                setCredentials({
+                    accessKeyId: session.credentials.accessKeyId,
+                    secretAccessKey: session.credentials.secretAccessKey,
+                    sessionToken: session.credentials.sessionToken,
+                });
+            }
+
+            await loadProfile(user, session);
+
             setIsAuthenticated(!!user);
-            if (user) loadProfile(user);
         } catch (error) {
-            setIsAuthenticated(false);
+            console.error("Session check failed", error);
+            handleSignOutLocal();
         } finally {
             setIsAuthChecking(false);
         }
     }
 
-    async function loadProfile(user: any) {
+    async function loadProfile(user: any, session: any) {
         try {
-            const { tokens } = await fetchAuthSession();
             const attributes = await fetchUserAttributes();
-
-            const groupsClaim = tokens?.accessToken?.payload['cognito:groups'];
+            const groupsClaim = session.tokens?.accessToken?.payload['cognito:groups'];
             const groups = Array.isArray(groupsClaim) ? (groupsClaim as string[]) : [];
+
             setProfile({
                 uuid: user.userId || user.username,
                 email: attributes.email || user.username,
@@ -71,18 +85,23 @@ export default function App() {
                 groups: Array.isArray(groups) ? groups : []
             });
         } catch (e) {
-            console.error("Failed to load attributes", e);
+            console.error("Failed to load profile attributes", e);
         }
     }
 
     async function handleSignOut() {
         try {
             await signOut();
-            setIsAuthenticated(false);
-            setProfile(null);
+            handleSignOutLocal();
         } catch (error) {
             console.error("Error signing out", error);
         }
+    }
+
+    function handleSignOutLocal() {
+        setIsAuthenticated(false);
+        setProfile(null);
+        setCredentials(null);
     }
 
     if (isAuthChecking) {
@@ -108,7 +127,7 @@ export default function App() {
 
     return (
         <ThemeProvider>
-            <UserProvider value={{ user: profile, isAuthenticated }}>
+            <UserProvider value={{ user: profile, credentials, isAuthenticated }}>
                 <BrowserRouter>
                     <Routes>
                         <Route element={<Layout signOut={handleSignOut} />}>
