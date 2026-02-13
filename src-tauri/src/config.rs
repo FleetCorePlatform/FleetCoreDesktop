@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::fs;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
@@ -14,13 +13,13 @@ struct Config {
 }
 
 pub fn load_config() -> AppConfig {
-    let config_str = fs::read_to_string("config.toml").expect("Failed to read config.toml");
+    let config_str = include_str!("../config.toml");
 
     let config: Config = toml::from_str(&config_str).expect("Failed to parse config.toml");
 
-    #[cfg(debug_assertions)]
-    return config.development;
-
-    #[cfg(not(debug_assertions))]
-    return config.production;
+    if cfg!(debug_assertions) {
+        config.development
+    } else {
+        config.production
+    }
 }

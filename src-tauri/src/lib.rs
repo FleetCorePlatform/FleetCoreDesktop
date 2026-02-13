@@ -74,6 +74,7 @@ async fn proxy_request(
     Ok(ApiResponse { status, data })
 }
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_config = config::load_config();
 

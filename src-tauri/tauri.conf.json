@@ -12,13 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "fleetcore-desktop",
+        "title": "FleetCore Dashboard",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "resizable": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": []
     }
   },
   "bundle": {

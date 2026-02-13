@@ -1,6 +1,6 @@
 [development]
-#backend_url = "http://192.168.1.190:8080"
-backend_url = "http://localhost:8080"
+backend_url = "http://192.168.1.232:8080"
+#backend_url = "http://localhost:8080"
 build_version = "build_v1.0.0-Alpha"
 
 [production]
