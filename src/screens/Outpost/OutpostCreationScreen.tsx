@@ -12,11 +12,12 @@ import { Input } from "@/components/ui/input.tsx"
 import { Label } from "@/components/ui/label.tsx"
 import {useState, useEffect, useRef, useMemo} from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getCurrentPosition } from '@tauri-apps/plugin-geolocation';
 import { AnimatePresence, motion } from "framer-motion";
 import {useTheme} from "@/ThemeProvider.tsx";
 import {apiCall} from "@/utils/api.ts";
 import {CreateOutpostBody} from "@/models/Outpost.ts";
+import {Coords} from "@/screens/Outpost/types.ts";
+import getCurrentLocation, {getIpLocation} from "@/utils/location.ts";
 
 const calculateArea = (latLngs: L.LatLng[]): number => {
     if (latLngs.length < 3) return 0;
@@ -67,7 +68,7 @@ function OutpostCreationScreen() {
     const [metrics, setMetrics] = useState({area: 0, perimeter: 0});
     const [isClosed, setIsClosed] = useState(false);
 
-    const [coords, setCoords] = useState({lat: 0.0, lng: 0.0});
+    const [coords, setCoords] = useState<Coords>({lat: 0.0, lng: 0.0});
     const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
     const [isLocating, setIsLocating] = useState(false);
 
@@ -124,42 +125,29 @@ function OutpostCreationScreen() {
     const handleUseCurrentLocation = async () => {
         setIsLocating(true);
         setLocationWarning(null);
-        setSidebarOpen(false)
+        setSidebarOpen(false);
 
         try {
-            const position = await getCurrentPosition({
-                enableHighAccuracy: true,
-                timeout: 3000,
-                maximumAge: 0
-            });
+            const coords = await getCurrentLocation();
+            setCoords(coords);
+            setMapTarget(coords);
+        } catch (error: any) {
+            const errorMsg = error?.message || error?.toString() || "";
 
-            if (position.coords.latitude !== 0 || position.coords.longitude !== 0) {
-                const {latitude, longitude} = position.coords;
-                setCoords({lat: latitude, lng: longitude});
-                setMapTarget({lat: latitude, lng: longitude});
-                return;
-            }
-
-            throw new Error("Invalid system coordinates (0,0)");
-
-        } catch (error) {
-            console.warn("Precise location failed, attempting IP fallback...", error);
-
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-
-                if (data.latitude && data.longitude) {
-                    setCoords({lat: data.latitude, lng: data.longitude});
-                    setMapTarget({lat: data.latitude, lng: data.longitude});
-
-                    setLocationWarning("Precise signal unavailable. Using approximate IP-based location.");
-                } else {
-                    throw new Error("IP Location failed");
+            if (errorMsg.includes("Location services are disabled")) {
+                setLocationWarning("SYSTEM LOCATION OFF: Please turn on the Location toggle in your Android Quick Settings.");
+            } else if (errorMsg.includes("denied")) {
+                setLocationWarning("Permission denied. Please enable Location permissions for this app in Settings.");
+            } else {
+                console.log("GPS failed, attempting IP fallback...");
+                try {
+                    const ipCoords = await getIpLocation();
+                    setCoords(ipCoords);
+                    setMapTarget(ipCoords);
+                    setLocationWarning("Using approximate IP-based location (GPS failed).");
+                } catch (fallbackError) {
+                    setLocationWarning("Could not detect location. Please enter coordinates manually.");
                 }
-            } catch (fallbackError) {
-                console.error("All location methods failed:", fallbackError);
-                setLocationWarning("Could not detect location. Please enter coordinates manually.");
             }
         } finally {
             setIsLocating(false);
@@ -446,7 +434,6 @@ function OutpostCreationScreen() {
                         style={{height: "100%", width: "100%"}}
                         className="z-0"
                         zoomControl={false}
-                        onClick={() => setShowSuggestions(false)}
                     >
                         {theme == "light" ?
                             <TileLayer
@@ -540,7 +527,7 @@ function OutpostCreationScreen() {
 
                                     <div className="flex-1 pt-0.5">
                                         <h4 className="text-sm font-bold text-white mb-1">
-                                            Approximate Location Only
+                                            Warning
                                         </h4>
                                         <p className="text-xs text-gray-400 leading-relaxed">
                                             {locationWarning}

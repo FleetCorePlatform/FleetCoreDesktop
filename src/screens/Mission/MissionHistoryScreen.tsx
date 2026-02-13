@@ -30,7 +30,7 @@ export default function MissionHistoryScreen() {
 
             console.log(groupUuid);
 
-            await apiCall("/api/v1/missions", {"group_uuid": groupUuid || ""}, "GET")
+            await apiCall<Mission[]>("/api/v1/missions", {"group_uuid": groupUuid || ""}, "GET")
                 .then(res => {
                     const sorted = res.sort((a: { startTime: string | number | Date; }, b: { startTime: string | number | Date; }) =>
                         new Date(b.startTime).getTime() - new Date(a.startTime).getTime()

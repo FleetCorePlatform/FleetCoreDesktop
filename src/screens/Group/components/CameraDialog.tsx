@@ -1,11 +1,18 @@
-import { useRef, useState, useEffect } from "react";
-import { DroneSummaryModel } from "../types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Camera, Signal } from 'lucide-react';
-import {useAuth} from "@aws-amplify/ui-react/internal";
+import {useEffect, useRef, useState} from "react";
+import {DroneSummaryModel} from "../types";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from "@/components/ui/dialog.tsx";
+import {Badge} from "@/components/ui/badge.tsx";
+import {Button} from "@/components/ui/button.tsx";
+import {Camera, Signal} from 'lucide-react';
 import {useUser} from "@/context/UserContext.ts";
+import {startViewer, stopViewer, ViewerHandle} from "@/utils/kvsClient.ts";
 
 interface CameraDialogProps {
     open: boolean;
@@ -16,28 +23,46 @@ interface CameraDialogProps {
 export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
     const [streamActive, setStreamActive] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const { user, credentials } = useUser();
-
-    useEffect(() => {
-        if (open && videoRef.current) {
-            console.log("Initializing WebRTC Player for", drone?.uuid);
-        }
-    }, [open, drone]);
+    const viewerHandleRef = useRef<ViewerHandle | null>(null);
+    const { credentials } = useUser();
 
     useEffect(() => {
         if (!open) {
+            stopViewer(viewerHandleRef.current);
+            viewerHandleRef.current = null;
             setStreamActive(false);
         }
     }, [open]);
 
+    const handleStart = async () => {
+        if (!credentials) {
+            console.error("Credentials missing - session may be invalid");
+            return;
+        }
+
+        try {
+            stopViewer(viewerHandleRef.current);
+
+            viewerHandleRef.current = await startViewer(
+                videoRef.current!,
+                credentials!,
+                "eu-central-1",
+                "kvs_test"
+            );
+            setStreamActive(true);
+        } catch (err) {
+            console.error("KVS Startup Failed", err);
+            setStreamActive(false);
+        }
+    };
+
     const toggleStream = () => {
         if (streamActive) {
-            if (videoRef.current) {
-                videoRef.current.srcObject = null;
-            }
+            stopViewer(viewerHandleRef.current);
+            viewerHandleRef.current = null;
             setStreamActive(false);
         } else {
-            setStreamActive(true);
+            handleStart();
         }
     };
 
@@ -73,11 +98,9 @@ export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
                             <video
                                 ref={videoRef}
                                 className="w-full h-full object-contain"
-                                controls
                                 autoPlay
                                 playsInline
                                 muted
-                                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                             />
 
                             <div className="absolute inset-0 pointer-events-none opacity-50">
