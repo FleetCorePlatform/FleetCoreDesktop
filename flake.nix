@@ -2,22 +2,16 @@
   description = "Tauri App Development Environment";
 
   inputs = {
-    # Linux: Use Unstable for latest WebKitGTK/GStreamer and Android API 36
     nixpkgs-linux.url = "github:nixos/nixpkgs/nixos-unstable";
-
-    # macOS: Use 24.11 (Stable) to avoid deprecated Frameworks
     nixpkgs-darwin.url = "github:nixos/nixpkgs/nixos-24.11";
-
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = { self, nixpkgs-linux, nixpkgs-darwin, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        # 1. Detect OS
         isLinux = builtins.match ".*linux.*" system != null;
 
-        # 2. Main Package Set (Unstable for Linux, Stable for Mac)
         pkgs = import (if isLinux then nixpkgs-linux else nixpkgs-darwin) {
           inherit system;
           config = {
@@ -28,16 +22,17 @@
 
         inherit (pkgs) lib;
 
-        # 3. Android Configuration (Explicitly uses nixpkgs-linux)
-        # We create a separate instance of nixpkgs-linux just for AndroidEnv
-        # to guarantee we are getting the latest definitions (API 36) even if
-        # logic elsewhere changes.
         pkgsAndroid = import nixpkgs-linux {
           inherit system;
           config = {
             allowUnfree = true;
             android_sdk.accept_license = true;
           };
+        };
+
+        pkgsUnstable = import nixpkgs-linux {
+          inherit system;
+          config.allowUnfree = true;
         };
 
         ndkVersion = "26.3.11579264";
@@ -48,10 +43,7 @@
           platformToolsVersion = "35.0.1";
           buildToolsVersions = [ "35.0.0" ];
           includeEmulator = false;
-
-          # Explicitly requesting 36 as confirmed available in Unstable
           platformVersions = [ "36" ];
-
           includeSources = false;
           includeSystemImages = false;
           includeNDK = true;
@@ -63,7 +55,6 @@
 
         androidSdk = if androidComposition != null then androidComposition.androidsdk else null;
 
-        # --- Linux Libraries ---
         linuxLibraries = with pkgs; [
           webkitgtk_4_1
           gtk3
@@ -92,7 +83,6 @@
           gst-libav
         ];
 
-        # --- macOS Frameworks ---
         darwinFrameworks = with pkgs.darwin.apple_sdk.frameworks; [
           Security
           CoreServices
@@ -102,7 +92,6 @@
           WebKit
         ] ++ [ pkgs.libiconv ];
 
-        # --- Common Tools ---
         commonPackages = with pkgs; [
           rustup
           cargo
@@ -115,21 +104,20 @@
           binutils
           just
           pkg-config
+        ] ++ [
+          pkgsUnstable.just
         ];
 
       in
       {
         devShells.default = pkgs.mkShell {
-          # Build Inputs
           buildInputs = commonPackages
             ++ lib.optionals isLinux (linuxLibraries ++ linuxGstreamer)
             ++ lib.optionals (!isLinux) darwinFrameworks;
 
-          # Native Build Inputs
           nativeBuildInputs = with pkgs; [ pkg-config ]
             ++ lib.optionals isLinux [ wrapGAppsHook4 xdotool ];
 
-          # Packages for PATH
           packages = lib.optionals isLinux [
             androidSdk
             pkgs.gradle
