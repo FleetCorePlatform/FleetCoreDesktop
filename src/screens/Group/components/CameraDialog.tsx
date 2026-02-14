@@ -1,5 +1,5 @@
-import {useEffect, useRef, useState} from "react";
-import {DroneSummaryModel} from "../types";
+import { useEffect, useRef, useState } from "react";
+import { DroneSummaryModel } from "../types";
 import {
     Dialog,
     DialogContent,
@@ -8,11 +8,11 @@ import {
     DialogHeader,
     DialogTitle
 } from "@/components/ui/dialog.tsx";
-import {Badge} from "@/components/ui/badge.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {Camera, Signal} from 'lucide-react';
-import {useUser} from "@/context/UserContext.ts";
-import {startViewer, stopViewer, ViewerHandle} from "@/utils/kvsClient.ts";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Camera, Signal } from 'lucide-react';
+import { useUser } from "@/context/UserContext.ts";
+import { startViewer, stopViewer, ViewerHandle } from "@/utils/kvsClient.ts";
 
 interface CameraDialogProps {
     open: boolean;
@@ -28,42 +28,54 @@ export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
 
     useEffect(() => {
         if (!open) {
-            stopViewer(viewerHandleRef.current);
-            viewerHandleRef.current = null;
             setStreamActive(false);
         }
     }, [open]);
 
-    const handleStart = async () => {
-        if (!credentials) {
-            console.error("Credentials missing - session may be invalid");
-            return;
-        }
+    useEffect(() => {
+        let mounted = true;
 
-        try {
-            stopViewer(viewerHandleRef.current);
+        const initStream = async () => {
+            if (streamActive && videoRef.current && credentials) {
+                try {
+                    stopViewer(viewerHandleRef.current);
 
-            viewerHandleRef.current = await startViewer(
-                videoRef.current!,
-                credentials!,
-                "eu-central-1",
-                "kvs_test"
-            );
-            setStreamActive(true);
-        } catch (err) {
-            console.error("KVS Startup Failed", err);
-            setStreamActive(false);
-        }
-    };
+                    console.log("Initializing KVS Stream...");
+                    const handle = await startViewer(
+                        videoRef.current,
+                        credentials,
+                        "eu-central-1",
+                        "kvs_test"
+                    );
 
-    const toggleStream = () => {
-        if (streamActive) {
+                    if (mounted) {
+                        viewerHandleRef.current = handle;
+                    } else {
+                        stopViewer(handle);
+                    }
+                } catch (err) {
+                    console.error("KVS Startup Failed", err);
+                    if (mounted) setStreamActive(false);
+                }
+            } else if (!streamActive) {
+                if (viewerHandleRef.current) {
+                    stopViewer(viewerHandleRef.current);
+                    viewerHandleRef.current = null;
+                }
+            }
+        };
+
+        initStream();
+
+        return () => {
+            mounted = false;
             stopViewer(viewerHandleRef.current);
             viewerHandleRef.current = null;
-            setStreamActive(false);
-        } else {
-            handleStart();
-        }
+        };
+    }, [streamActive, credentials]);
+
+    const toggleStream = () => {
+        setStreamActive(prev => !prev);
     };
 
     return (
@@ -102,29 +114,19 @@ export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
                                 playsInline
                                 muted
                             />
-
+                            {/* Overlay Elements */}
                             <div className="absolute inset-0 pointer-events-none opacity-50">
                                 <div className="absolute top-4 left-4 w-16 h-16 border-t-2 border-l-2 border-white/20"></div>
                                 <div className="absolute top-4 right-4 w-16 h-16 border-t-2 border-r-2 border-white/20"></div>
                                 <div className="absolute bottom-4 left-4 w-16 h-16 border-b-2 border-l-2 border-white/20"></div>
                                 <div className="absolute bottom-4 right-4 w-16 h-16 border-b-2 border-r-2 border-white/20"></div>
-
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8">
-                                    <div className="absolute w-full h-[1px] bg-white/30 top-1/2"></div>
-                                    <div className="absolute h-full w-[1px] bg-white/30 left-1/2"></div>
-                                </div>
                             </div>
                         </>
                     ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            {/* Grid Background */}
                             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
-
                             <div className="z-10 text-center space-y-4">
-                                <div className="space-y-2">
-                                    <h2 className="text-3xl font-black tracking-widest text-[hsl(var(--text-muted))] opacity-30 select-none">NO SIGNAL</h2>
-                                    <p className="text-xs text-[hsl(var(--text-muted))] font-mono">ESTABLISH UPLINK TO VIEW FEED</p>
-                                </div>
+                                <h2 className="text-3xl font-black tracking-widest text-[hsl(var(--text-muted))] opacity-30 select-none">NO SIGNAL</h2>
                                 <Button
                                     onClick={toggleStream}
                                     variant="outline"
@@ -143,7 +145,7 @@ export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
                         <span>PROTOCOL: WEBRTC</span>
                         <span>
                             STATUS: <span className={streamActive ? "text-emerald-500" : "text-yellow-500"}>
-                                {streamActive ? "CONNECTED (52ms)" : "STANDBY"}
+                                {streamActive ? "CONNECTED" : "STANDBY"}
                             </span>
                         </span>
                     </div>

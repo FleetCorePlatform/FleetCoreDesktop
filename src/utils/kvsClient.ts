@@ -1,7 +1,7 @@
 import { SignalingClient, Role } from "amazon-kinesis-video-streams-webrtc";
 import { KinesisVideoClient, DescribeSignalingChannelCommand, GetSignalingChannelEndpointCommand } from "@aws-sdk/client-kinesis-video";
 import { KinesisVideoSignalingClient, GetIceServerConfigCommand } from "@aws-sdk/client-kinesis-video-signaling";
-import {UserCredentials} from "@/models/User.ts";
+import { UserCredentials } from "@/models/User.ts";
 
 export interface ViewerHandle {
     signalingClient: SignalingClient;
@@ -40,7 +40,6 @@ export async function startViewer(
         }
     });
     const endpointsResp = await kvsClient.send(getEndpointsCmd);
-
     const endpoints = endpointsResp.ResourceEndpointList?.reduce((acc, endpoint) => {
         if (endpoint.Protocol && endpoint.ResourceEndpoint) {
             acc[endpoint.Protocol] = endpoint.ResourceEndpoint;
@@ -79,24 +78,18 @@ export async function startViewer(
         }
     });
 
-    console.log("WebRTC Debug:", {
-        RTCPeerConnection: typeof window.RTCPeerConnection !== 'undefined',
-        webkitRTCPeerConnection: typeof (window as any).webkitRTCPeerConnection !== 'undefined',
-        isSecureContext: window.isSecureContext,
-        mediaDevices: !!navigator.mediaDevices,
-        userAgent: navigator.userAgent
-    });
-
     const PeerConnectionClass = window.RTCPeerConnection || (window as any).webkitRTCPeerConnection;
     if (!PeerConnectionClass) {
-        throw new Error("RTCPeerConnection is not supported in this environment. Check GStreamer plugins (bad, nice) and Hardware Acceleration.");
+        throw new Error("RTCPeerConnection is not supported.");
     }
-
 
     const peerConnection = new PeerConnectionClass({
         iceServers: iceServers,
         iceTransportPolicy: 'all'
     });
+
+    peerConnection.addTransceiver('video', { direction: 'recvonly' });
+    peerConnection.addTransceiver('audio', { direction: 'recvonly' });
 
     const signalingClient = new SignalingClient({
         channelARN: channelArn,
@@ -113,6 +106,7 @@ export async function startViewer(
     });
 
     peerConnection.ontrack = (event) => {
+        console.log("Track received:", event.track.kind);
         if (videoElement.srcObject !== event.streams[0]) {
             videoElement.srcObject = event.streams[0];
             videoElement.play().catch(e => console.error("Autoplay prevented", e));
@@ -128,10 +122,7 @@ export async function startViewer(
     signalingClient.on('open', async () => {
         console.log("Signaling connected. Creating offer...");
         try {
-            const offer = await peerConnection.createOffer({
-                offerToReceiveAudio: true,
-                offerToReceiveVideo: true
-            });
+            const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
             signalingClient.sendSdpOffer(peerConnection.localDescription as RTCSessionDescription);
         } catch (e) {
@@ -172,6 +163,7 @@ export async function startViewer(
 
 export function stopViewer(handle: ViewerHandle | null) {
     if (!handle) return;
+    console.log("Stopping Viewer...");
     handle.signalingClient.close();
     handle.peerConnection.close();
     console.log("WebRTC Resources Released");
