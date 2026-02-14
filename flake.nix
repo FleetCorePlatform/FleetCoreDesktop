@@ -17,6 +17,7 @@
         # 1. Detect OS
         isLinux = builtins.match ".*linux.*" system != null;
 
+        # 2. Main Package Set (Unstable for Linux, Stable for Mac)
         pkgs = import (if isLinux then nixpkgs-linux else nixpkgs-darwin) {
           inherit system;
           config = {
@@ -27,17 +28,16 @@
 
         inherit (pkgs) lib;
 
+        # 3. Android Configuration (Explicitly uses nixpkgs-linux)
+        # We create a separate instance of nixpkgs-linux just for AndroidEnv
+        # to guarantee we are getting the latest definitions (API 36) even if
+        # logic elsewhere changes.
         pkgsAndroid = import nixpkgs-linux {
           inherit system;
           config = {
             allowUnfree = true;
             android_sdk.accept_license = true;
           };
-        };
-
-        pkgsUnstable = import nixpkgs-linux {
-          inherit system;
-          config.allowUnfree = true;
         };
 
         ndkVersion = "26.3.11579264";
@@ -113,9 +113,8 @@
           file
           gnumake
           binutils
+          just
           pkg-config
-        ]++ [
-          pkgsUnstable.just
         ];
 
       in
@@ -166,6 +165,7 @@
             ${lib.optionalString isLinux ''
               export LD_LIBRARY_PATH=/run/opengl-driver/lib:${lib.makeLibraryPath (linuxLibraries ++ linuxGstreamer)}:${pkgs.gst_all_1.gst-plugins-base}/lib:${pkgs.gst_all_1.gst-plugins-bad}/lib:${pkgs.mesa}/lib:${pkgs.libglvnd}/lib:$LD_LIBRARY_PATH
 
+              export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules/"
               export GST_PLUGIN_SYSTEM_PATH_1_0=${pkgs.gst_all_1.gstreamer}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-libav}/lib/gstreamer-1.0:${pkgs.libnice.out}/lib/gstreamer-1.0
 
               # GPU / WebRTC Workarounds

@@ -10,7 +10,7 @@ import {
     ArrowLeft, Cpu, Wifi, Shield,
     Camera, Navigation, Thermometer,
     Zap, AlertCircle, MapPin, Box, Terminal,
-    Activity, Clock, Server, FileText, Pause
+    Clock, Server, FileText, Pause
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,10 @@ interface Drone {
     home_position: { x: number; y: number; z: number };
     model: string;
     capabilities: Array<string>;
+    status: {
+        uptime: number | null;
+        connected: boolean;
+    };
 }
 
 interface TerminalEntry {
@@ -157,9 +161,8 @@ const DroneVisualizer = memo(({ modelName }: { modelName: string }) => {
             >
                 <Suspense fallback={<Loader />}>
                     <Environment preset="city" />
-                    <Stage environment={null} intensity={0.5} contactShadow={false} shadowBias={-0.0015}>
+                    <Stage environment={null} intensity={0.5}>
                         <PresentationControls
-                            config={{ mass: 1, tension: 170, friction: 26 }}
                             global
                             zoom={0.8}
                             polar={[-0.2, Math.PI / 2]}
@@ -188,13 +191,19 @@ export default function DroneDetailsScreen() {
     const [isConsoleOpen, setIsConsoleOpen] = useState(false);
 
     const { theme } = useTheme();
+    const [now, setNow] = useState(Date.now());
+
+    useEffect(() => {
+        const interval = setInterval(() => setNow(Date.now()), 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         if (!droneUuid) return;
         const fetchDrone = async () => {
             setLoading(true);
             try {
-                const data = await apiCall(`/api/v1/drones/${droneUuid}`, undefined, "GET");
+                const data = await apiCall<Drone>(`/api/v1/drones/${droneUuid}`, undefined, "GET");
                 setDrone(data);
             } catch (e) {
                 console.error("Error fetching drone:", e);
@@ -215,6 +224,25 @@ export default function DroneDetailsScreen() {
         if (c.includes('wifi') || c.includes('telemetry')) return Wifi;
         if (c.includes('compute') || c.includes('pi')) return Cpu;
         return Zap;
+    };
+
+    const formatUptime = (timestamp: number | null, isConnected: boolean = true) => {
+        if (!isConnected || !timestamp) return "OFFLINE";
+
+        const diff = Date.now() - timestamp;
+        const minutes = Math.floor(diff / 1000 / 60);
+        const hours = Math.floor(minutes / 60);
+
+        const days = Math.floor(hours / 24);
+        const displayHours = hours % 24;
+        const displayMinutes = minutes % 60;
+
+        let result = "";
+        if (days > 0) result += `${days}d `;
+        if (displayHours > 0 || days > 0) result += `${displayHours}h `;
+        result += `${displayMinutes}m`;
+
+        return result;
     };
 
     if (loading) {
@@ -315,8 +343,7 @@ export default function DroneDetailsScreen() {
 
                                 <div className="h-[450px] w-full bg-[hsl(var(--bg-tertiary))] relative">
                                     {isConsoleOpen ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--bg-tertiary))] z-10">
-                                            {/* Logo / Icon Container */}
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--bg-tertiary))]/60 backdrop-blur-sm z-10 transition-all">
                                             <div className="relative group cursor-default">
                                                 <div className="absolute -inset-4 bg-[hsl(var(--primary))] rounded-full opacity-0 group-hover:opacity-10 animate-pulse transition-opacity duration-700"></div>
 
@@ -353,7 +380,7 @@ export default function DroneDetailsScreen() {
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))] uppercase">Protocol</span>
                                         <div className="flex items-center gap-2 mt-1">
                                             <Wifi size={18} className="text-emerald-400" />
-                                            <span className="text-lg">MAVLink v2</span>
+                                            <span className="text-lg font-mono">MAVLink v2</span>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -362,16 +389,39 @@ export default function DroneDetailsScreen() {
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))] uppercase">Agent Version</span>
                                         <div className="flex items-center gap-2 mt-1">
                                             <Server size={18} className="text-blue-400" />
-                                            <span className="text-lg">{drone.manager_version}</span>
+                                            <span className="text-lg font-mono">{drone.manager_version}</span>
                                         </div>
                                     </CardContent>
                                 </Card>
                                 <Card className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))]">
                                     <CardContent className="p-4 flex flex-col gap-1">
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))] uppercase">Uptime</span>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Clock size={18} className="text-yellow-400" />
-                                            <span className="text-lg">04:12:33</span>
+                                        <div className="flex items-start gap-3 mt-1">
+                                            <div className="mt-1">
+                                                {drone.status?.connected ? (
+                                                    <span className="relative flex h-3 w-3">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                                    </span>
+                                                ) : (
+                                                    <Clock size={18} className="text-zinc-500" />
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className={`text-lg font-mono leading-none ${drone.status?.connected ? "text-[hsl(var(--text-primary))]" : "text-zinc-500"}`}>
+                                                    {formatUptime(drone.status?.uptime, drone.status?.connected)}
+                                                </span>
+
+                                                <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
+                                                    {!drone.status?.uptime
+                                                        ? "Status: Never Seen"
+                                                        : drone.status.connected
+                                                            ? "Status: Uplink Active"
+                                                            : `Last Seen: ${new Date(drone.status.uptime).toLocaleString()}`
+                                                    }
+                                                </span>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -453,7 +503,7 @@ export default function DroneDetailsScreen() {
                                                                 <span className="text-sm font-medium text-[hsl(var(--text-secondary))] capitalize">{cap}</span>
                                                             </div>
                                                             <Badge variant="outline" className="text-[10px] border-[hsl(var(--border-primary))] text-[hsl(var(--text-muted))]">
-                                                                ACTIVE
+                                                                INSTALLED
                                                             </Badge>
                                                         </div>
                                                     );

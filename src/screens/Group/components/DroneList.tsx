@@ -57,7 +57,7 @@ export function DroneList({
                         </CardDescription>
                     </div>
                     <Input
-                        placeholder="Filter by UUID or Name..."
+                        placeholder="Search by name..."
                         className="w-full md:w-64 h-9 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))]"
                     />
                 </div>
