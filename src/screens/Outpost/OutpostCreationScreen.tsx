@@ -304,12 +304,10 @@ function OutpostCreationScreen() {
                 `}>
                     <div className="px-5 py-4 border-b border-[hsl(var(--border-primary))]">
                         <div className="flex items-center gap-2 mb-1">
-                            <Link to="/outposts">
-                                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}
-                                        className="h-8 w-8 -ml-2 text-[hsl(var(--text-secondary))]">
-                                    <ArrowLeft size={18}/>
-                                </Button>
-                            </Link>
+                            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}
+                                    className="h-8 w-8 -ml-2 lg:hidder md:hidden text-[hsl(var(--text-secondary))]">
+                                <PanelLeft size={18}/>
+                            </Button>
                             <h1 className="text-lg font-bold">New Outpost</h1>
                         </div>
                         <p className="text-xs text-[hsl(var(--text-secondary))] pl-7">Define operational zone
