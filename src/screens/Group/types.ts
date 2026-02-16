@@ -8,7 +8,15 @@ export interface DroneSummaryModel {
     home_position: { x: number; y: number; z: number },
     maintenance: boolean,
     remaining_percent: number | null,
-    inFlight: boolean
+    inFlight: boolean,
+    signaling_channel_name: string,
+}
+
+export interface GroupModel {
+    uuid: string;
+    outpost_uuid: string;
+    name: string;
+    created_at: string;
 }
 
 export interface RegisterDroneRequest {
@@ -26,7 +34,13 @@ export interface RegisterDroneRequest {
     capabilities: Array<string>;
 }
 
+export interface RegisteredDroneResponse {
+    createdDroneUuid: string;
+    certs: IoTCertContainer;
+}
+
 export interface IoTCertContainer {
+    createdDroneUuid: string,
     privateKey: string;
     certificatePEM: string;
     certificateARN: string;

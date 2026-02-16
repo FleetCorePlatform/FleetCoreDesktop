@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, XCircle } from 'lucide-react';
 
 interface DeleteGroupDialogProps {
     open: boolean;
@@ -11,16 +11,18 @@ interface DeleteGroupDialogProps {
     input: string;
     setInput: (val: string) => void;
     onConfirm: () => void;
+    error?: string | null;
 }
 
 export function DeleteGroupDialog({
-    open,
-    onOpenChange,
-    targetGroupName,
-    input,
-    setInput,
-    onConfirm
-}: DeleteGroupDialogProps) {
+      open,
+      onOpenChange,
+      targetGroupName,
+      input,
+      setInput,
+      onConfirm,
+      error
+  }: DeleteGroupDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] sm:max-w-[425px]">
@@ -35,6 +37,14 @@ export function DeleteGroupDialog({
                 </DialogHeader>
 
                 <div className="py-4 space-y-4">
+                    {/* Error Display Area */}
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 flex items-start gap-3 text-red-400">
+                            <XCircle size={16} className="mt-0.5 shrink-0" />
+                            <span className="text-xs font-medium">{error}</span>
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <Label className="text-xs">
                             Please type <span className="font-mono text-red-400 font-bold">{targetGroupName}</span> to confirm.

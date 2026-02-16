@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import {apiCall, apiCallFull} from "@/utils/api.ts";
 
 import {
-    DroneSummaryModel, RegisterDroneRequest, IoTCertContainer, MAINTENANCE_TYPES, PUBLIC_IP_REGEX, EditDroneField,
-    PatchDroneRequestModel
+    DroneSummaryModel, RegisterDroneRequest, MAINTENANCE_TYPES, PUBLIC_IP_REGEX, EditDroneField,
+    PatchDroneRequestModel, RegisteredDroneResponse, GroupModel
 } from "./types";
 
 import { GroupHeader } from "./components/GroupHeader";
@@ -34,7 +34,7 @@ export default function GroupOverviewScreen() {
 
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [regError, setRegError] = useState<string | null>(null);
-    const [generatedCerts, setGeneratedCerts] = useState<IoTCertContainer | null>(null);
+    const [createdDroneBody, setCreatedDroneBody] = useState<RegisteredDroneResponse | null>(null);
 
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [deleteInput, setDeleteInput] = useState("");
@@ -56,6 +56,10 @@ export default function GroupOverviewScreen() {
 
     const [targetGroupName, setTargetGroupName] = useState("");
     const [firmwareVersion, setFirmwareVersion] = useState("");
+
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const [regForm, setRegForm] = useState<RegFormState>({
         name: '',
@@ -106,13 +110,15 @@ export default function GroupOverviewScreen() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const dronesSummary: Array<DroneSummaryModel> = await apiCall(
-                    `/api/v1/groups?group_uuid=${groupUuid}&limit=10`, undefined,
-                    "GET"
+                const groupPromise = apiCall<GroupModel>(`/api/v1/groups/${groupUuid}`, undefined, "GET");
+                const dronesPromise = apiCall<DroneSummaryModel[]>(
+                    `/api/v1/groups?group_uuid=${groupUuid}&limit=10`, undefined, "GET"
                 );
-                setDrones(dronesSummary);
 
-                setTargetGroupName(dronesSummary.length > 0 ? dronesSummary[0].group_name : "");
+                const [groupDetails, dronesSummary] = await Promise.all([groupPromise, dronesPromise]);
+
+                setTargetGroupName(groupDetails.name);
+                setDrones(dronesSummary);
                 setFirmwareVersion(dronesSummary.length > 0 ? dronesSummary[0].manager_version : "N/A");
             } catch (error) {
                 console.error("Failed to fetch group details", error);
@@ -126,16 +132,31 @@ export default function GroupOverviewScreen() {
 
     const pageTitle = targetGroupName;
 
+
+
     const handleDeleteClick = () => {
         setDeleteInput("");
+        setDeleteError(null);
         setIsDeleteOpen(true);
     };
 
     const confirmDelete = async () => {
         if (deleteInput !== targetGroupName) return;
-        setIsDeleteOpen(false);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        navigate(`/outposts/${outpostUuid}`);
+        setDeleteError(null);
+
+        await apiCallFull(`/api/v1/groups/${groupUuid}`, undefined, "DELETE")
+            .then(res => {
+                if (res.status === 304) {
+                    setDeleteError("Cannot delete group: The group is not empty. Please decommission or move all drones before deleting the group.");
+                } else if (res.status === 204) {
+                    setIsDeleteOpen(false);
+                    navigate(`/outposts/${outpostUuid}`);
+                }
+            })
+            .catch(e => {
+                console.error("Error while deleting group: ", e);
+                setDeleteError("An unexpected error occurred while deleting the group.");
+            })
     };
 
     const openDecommissionModal = (drone: DroneSummaryModel) => {
@@ -203,8 +224,8 @@ export default function GroupOverviewScreen() {
             capabilities: regForm.capabilities
         };
 
-        await apiCall<IoTCertContainer>("/api/v1/drones", undefined, "POST", payload)
-            .then(res => setGeneratedCerts(res))
+        await apiCall<RegisteredDroneResponse>("/api/v1/drones", undefined, "POST", payload)
+            .then(res => setCreatedDroneBody(res))
             .catch(e => {
                 console.log("Error while registering drone: ", e);
                 setRegError(null);
@@ -268,6 +289,10 @@ export default function GroupOverviewScreen() {
         return <div className="p-8 text-center text-[hsl(var(--text-secondary))]">Loading fleet data...</div>;
     }
 
+    const filteredDrones = drones.filter(d =>
+        d.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans overflow-hidden">
             <div className="flex-1 overflow-auto">
@@ -287,7 +312,9 @@ export default function GroupOverviewScreen() {
                     />
 
                     <DroneList
-                        drones={drones}
+                        filteredDrones={filteredDrones}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
                         onCameraClick={openCamera}
                         onViewDetailsClick={(uuid) => navigate(`/drones/${uuid}`)}
                         onEditClick={openEditModal}
@@ -313,7 +340,7 @@ export default function GroupOverviewScreen() {
                     setIsRegisterOpen(open);
                     if (!open) {
                         setTimeout(() => {
-                            setGeneratedCerts(null);
+                            setCreatedDroneBody(null);
                             setRegForm({
                                 name: '', group: targetGroupName, address: '',
                                 px4: 'v1.14.0', agent: 'v2.5.1', altitude: '50', home: null,
@@ -326,7 +353,7 @@ export default function GroupOverviewScreen() {
                 setRegForm={setRegForm}
                 targetGroupName={targetGroupName}
                 onRegister={handleRegister}
-                generatedCerts={generatedCerts}
+                registeredDroneResponse={createdDroneBody}
                 regError={regError}
                 onFinish={handleFinishRegistration}
                 saveFile={saveFile}
@@ -339,6 +366,7 @@ export default function GroupOverviewScreen() {
                 input={deleteInput}
                 setInput={setDeleteInput}
                 onConfirm={confirmDelete}
+                error={deleteError}
             />
 
             <DecommissionDialog

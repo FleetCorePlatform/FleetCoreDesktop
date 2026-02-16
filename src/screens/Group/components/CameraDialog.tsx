@@ -33,14 +33,14 @@ export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
     const { credentials } = useUser();
 
     const setRemoteStreamState = async (shouldEnable: boolean) => {
-        if (!drone?.uuid) return;
+        if (!drone?.uuid || !drone?.signaling_channel_name) return;
 
         const payload: DroneStreamingRequest = {
             enabled: shouldEnable
         };
 
         try {
-            const res = await apiCallFull<undefined>(`/api/v1/drones/${drone.name}/stream`, undefined, "POST", payload);
+            const res = await apiCallFull<undefined>(`/api/v1/drones/${drone.uuid}/stream`, undefined, "POST", payload);
             if (res.status !== 204) {
                 console.error("Error toggling stream, status:", res.status);
             }
@@ -72,7 +72,7 @@ export function CameraDialog({ open, onOpenChange, drone }: CameraDialogProps) {
                 videoRef.current!,
                 credentials!,
                 "eu-central-1",
-                "kvs_test"
+                drone!.signaling_channel_name
             );
             setStreamActive(true);
         } catch (err: any) {

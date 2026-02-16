@@ -14,9 +14,8 @@ import "leaflet/dist/leaflet.css";
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-import { IoTCertContainer, AVAILABLE_CAPABILITIES } from "../types";
+import {AVAILABLE_CAPABILITIES, RegisteredDroneResponse} from "../types";
 
-// Fix Leaflet icon
 let DefaultIcon = L.icon({
     iconUrl: icon,
     shadowUrl: iconShadow,
@@ -54,7 +53,7 @@ interface RegistrationDialogProps {
     setRegForm: (form: RegFormState) => void;
     targetGroupName: string;
     onRegister: () => void;
-    generatedCerts: IoTCertContainer | null;
+    registeredDroneResponse: RegisteredDroneResponse | null;
     regError: string | null;
     onFinish: () => void;
     saveFile: (filename: string, content: string) => void;
@@ -67,7 +66,7 @@ export function RegistrationDialog({
     setRegForm,
     targetGroupName,
     onRegister,
-    generatedCerts,
+    registeredDroneResponse,
     regError,
     onFinish,
     saveFile
@@ -87,8 +86,7 @@ export function RegistrationDialog({
         >
             <DialogContent className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
 
-                {generatedCerts ? (
-                    /* --- SUCCESS / DOWNLOAD VIEW --- */
+                {registeredDroneResponse ? (
                     <div className="flex flex-col items-center justify-center py-4 space-y-6">
                         <div className="flex flex-col items-center text-center space-y-2">
                             <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-2">
@@ -119,7 +117,7 @@ export function RegistrationDialog({
                                         size="sm"
                                         variant="outline"
                                         className="gap-2 border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-500"
-                                        onClick={() => saveFile(`${regForm.name}-private.key`, generatedCerts.privateKey)}
+                                        onClick={() => saveFile(`${registeredDroneResponse.createdDroneUuid}-private.key`, registeredDroneResponse.certs.privateKey)}
                                     >
                                         <Download size={14} /> Download
                                     </Button>
@@ -139,7 +137,7 @@ export function RegistrationDialog({
                                         size="sm"
                                         variant="outline"
                                         className="gap-2 border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-500"
-                                        onClick={() => saveFile(`${regForm.name}-cert.pem`, generatedCerts.certificatePEM)}
+                                        onClick={() => saveFile(`${registeredDroneResponse.createdDroneUuid}-cert.pem`, registeredDroneResponse.certs.certificatePEM)}
                                     >
                                         <Download size={14} /> Download
                                     </Button>
@@ -152,8 +150,8 @@ export function RegistrationDialog({
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-sm font-medium">AWS IoT ARN</span>
-                                            <span className="text-xs text-[hsl(var(--text-muted))] font-mono truncate max-w-[200px]" title={generatedCerts.certificateARN}>
-                                                {generatedCerts.certificateARN}
+                                            <span className="text-xs text-[hsl(var(--text-muted))] font-mono truncate max-w-[200px]" title={registeredDroneResponse.certs.certificateARN}>
+                                                {registeredDroneResponse.certs.certificateARN}
                                             </span>
                                         </div>
                                     </div>
@@ -176,12 +174,11 @@ export function RegistrationDialog({
                                 onClick={onFinish}
                                 className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white min-w-[200px]"
                             >
-                                Finish & Reload
+                                Finish registration
                             </Button>
                         </DialogFooter>
                     </div>
                 ) : (
-                    /* --- INPUT FORM VIEW --- */
                     <>
                         <DialogHeader>
                             <DialogTitle>Register New Drone</DialogTitle>
@@ -190,7 +187,6 @@ export function RegistrationDialog({
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-6 py-4">
-                            {/* Row 1: Name & Group */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-name">Drone Name</Label>
@@ -213,7 +209,6 @@ export function RegistrationDialog({
                                 </div>
                             </div>
 
-                            {/* Row 2: Address & Model (NEW) */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-address">Network Address</Label>
@@ -240,7 +235,6 @@ export function RegistrationDialog({
                                 </div>
                             </div>
 
-                            {/* Row 3: Agent Version */}
                             <div className="grid grid-cols-1 gap-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-agent">Agent Version</Label>
@@ -253,7 +247,6 @@ export function RegistrationDialog({
                                 </div>
                             </div>
 
-                            {/* Row 4: Capabilities (NEW) */}
                             <div className="space-y-3">
                                 <Label>System Capabilities</Label>
                                 <div className="flex flex-wrap gap-2 p-3 border border-[hsl(var(--border-primary))] rounded-md bg-[hsl(var(--bg-tertiary))]/30">
@@ -283,7 +276,6 @@ export function RegistrationDialog({
                                 </p>
                             </div>
 
-                            {/* Row 5: Map */}
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <Label>Home Position</Label>
