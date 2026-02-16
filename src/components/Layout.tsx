@@ -11,17 +11,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { useTheme } from "@/ThemeProvider.tsx";
 import { apiCall } from "@/utils/api.ts";
 import {invoke} from "@tauri-apps/api/core";
-
-interface Check {
-    name: string;
-    status: "UP" | "DOWN";
-    data?: any;
-}
-
-interface Health {
-    status: "UP" | "DOWN";
-    checks: Array<Check>;
-}
+import {Health} from "@/screens/common/types.ts";
 
 const getRouteIndex = (pathname: string) => {
     if (pathname === "/") return 0;
@@ -92,7 +82,7 @@ export default function Layout({ signOut }: LayoutProps) {
     const checkHealth = useCallback(async () => {
         setIsRefreshing(true);
         try {
-            const healthRes = await apiCall('/q/health', undefined, "GET");
+            const healthRes = await apiCall<Health>('/q/health', undefined, "GET");
             setHealth(healthRes);
         } catch (error: any) {
             if (error.status === 503 && error.data) {

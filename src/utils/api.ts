@@ -19,7 +19,7 @@ class ApiError extends Error {
 
 export async function apiCall<T>(
     path: string,
-    queryParam?: Record<string, string>,
+    queryParam?: Record<string, string | number>,
     method: string = 'GET',
     body?: any,
 ): Promise<T> {
@@ -29,7 +29,7 @@ export async function apiCall<T>(
 
 export async function apiCallFull<T>(
     path: string,
-    queryParam?: Record<string, string>,
+    queryParam?: Record<string, string | number>,
     method: string = 'GET',
     body?: any,
 ): Promise<{data: T, status: number}> {

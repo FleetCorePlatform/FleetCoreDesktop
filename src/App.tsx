@@ -8,15 +8,15 @@ import { ThemeProvider } from "@/ThemeProvider.tsx";
 import Layout from "./components/Layout";
 import LoginScreen from "./screens/LoginScreen";
 
-import DashboardScreen from "./screens/DashboardScreen";
+import DashboardScreen from "./screens/Dashboard/DashboardScreen";
 
 import { UserProvider } from "@/context/UserContext.ts";
-import CoordinatorProfileScreen, { Coordinator } from "./screens/ProfileScreen";
+import CoordinatorProfileScreen, { Coordinator } from "./screens/Profile/ProfileScreen";
 import { UserCredentials } from "@/models/User.ts";
 import OutpostListScreen from "@/screens/Outpost/OutpostScreen.tsx";
 import OutpostCreationScreen from "@/screens/Outpost/OutpostCreationScreen.tsx";
 import OutpostOverviewScreen from "@/screens/Outpost/OutpostOverviewScreen.tsx";
-import MaintenanceScreen from "@/screens/MaintenanceScreen.tsx";
+import MaintenanceScreen from "@/screens/Maintenance/MaintenanceScreen.tsx";
 import DroneDetailsScreen from "@/screens/Drone/DroneDetailScreen.tsx";
 import OutpostEditScreen from "@/screens/Outpost/OutpostEditScreen.tsx";
 import GroupOverviewScreen from "@/screens/Group/GroupOverviewScreen.tsx";
@@ -58,7 +58,7 @@ export default function App() {
             setCredentials({
                 accessKeyId: session.credentials.accessKeyId,
                 secretAccessKey: session.credentials.secretAccessKey,
-                sessionToken: session.credentials.sessionToken,
+                sessionToken: session.credentials.sessionToken || "",
             });
 
             await loadProfile(user, session);
@@ -139,7 +139,7 @@ export default function App() {
                             <Route path="/drones/:droneUuid" element={<DroneDetailsScreen />} />
                             <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
                             <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
-                            <Route path="/missions/new/:groupUUID" element={<MissionCreationScreen />} />
+                            <Route path="/missions/new/:outpostUuid" element={<MissionCreationScreen />} />
                             <Route path="/missions/:groupUuid" element={<MissionHistoryScreen />} />
                             <Route path="/detections/:groupUuid/:missionUuid" element={<DetectionReviewScreen />} />
                             <Route path="/profile" element={<CoordinatorProfileScreen profile={profile} />} />
