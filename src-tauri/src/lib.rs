@@ -7,6 +7,8 @@ use tauri::command;
 use tauri::{Manager, State};
 
 mod config;
+mod query_enum;
+use query_enum::QueryValue;
 
 #[derive(Serialize)]
 struct ApiResponse {
@@ -22,8 +24,9 @@ async fn get_build_version(config: State<'_, AppConfig>) -> Result<String, Strin
 
 #[command]
 async fn proxy_request(
+    client: State<'_, Client>,
     path: String,
-    query_param: Option<HashMap<String, String>>,
+    query_param: Option<HashMap<String, QueryValue>>,
     method: String,
     token: String,
     body: Option<serde_json::Value>,
@@ -31,8 +34,6 @@ async fn proxy_request(
 ) -> Result<ApiResponse, String> {
     let base_url = &config.backend_url;
     let url = format!("{}{}", base_url, path);
-
-    let client = Client::new();
 
     let mut request_builder = match method.as_str() {
         "GET" => client.get(&url),
@@ -46,13 +47,17 @@ async fn proxy_request(
     request_builder = request_builder.header("Authorization", format!("Bearer {}", token));
 
     if let Some(params) = query_param {
-        request_builder = request_builder.query(&params);
+        for (key, value) in params {
+            let value_str = match value {
+                QueryValue::String(s) => s,
+                QueryValue::Number(n) => n.to_string(),
+            };
+            request_builder = request_builder.query(&[(key, value_str)]);
+        }
     }
 
     if let Some(b) = body {
-        request_builder = request_builder
-            .header("Content-Type", "application/json")
-            .json(&b);
+        request_builder = request_builder.json(&b);
     }
 
     let request = request_builder.build().map_err(|e| e.to_string())?;
@@ -78,11 +83,16 @@ async fn proxy_request(
 pub fn run() {
     let app_config = config::load_config();
 
+    let client = Client::builder()
+        .build()
+        .expect("Failed to initialize HTTP client");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(move |app| {
             app.manage(app_config.clone());
+            app.manage(client);
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())

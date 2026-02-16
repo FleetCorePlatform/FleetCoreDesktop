@@ -1,6 +1,7 @@
 # Development
+[arg("target", help='Platform: mac, windows, linux, android, ios, ""')]
 dev target="":
-    cargo tauri {{ target }} dev
+    cargo tauri {{ if target == "" { "dev" } else { target + " dev" } }}
 
 # Build for production
 [arg("target", help="Platform: mac, windows, linux, android, ios, current")]
