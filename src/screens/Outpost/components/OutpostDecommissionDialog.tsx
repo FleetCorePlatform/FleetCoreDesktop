@@ -1,9 +1,9 @@
-import { Outpost } from "@/screens/Outpost/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Trash2 } from 'lucide-react';
+import {Outpost} from "@/screens/common/types.ts";
 
 interface OutpostDecommissionDialogProps {
     open: boolean;

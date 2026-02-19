@@ -14,9 +14,9 @@ import {Link, useNavigate} from "react-router-dom";
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
 import { useTheme } from "@/ThemeProvider.tsx";
-import { Outpost } from "@/screens/Outpost/types";
 import {apiCallFull} from "@/utils/api.ts";
 import { OutpostDecommissionDialog } from "./OutpostDecommissionDialog";
+import {Outpost} from "@/screens/common/types.ts";
 
 function MapBoundsController({ points }: { points: { x: number, y: number }[] }) {
     const map = useMap();
@@ -150,7 +150,7 @@ export function OutpostCard({ outpost }: { outpost: Outpost }) {
                 <div className="h-32 bg-[hsl(var(--bg-tertiary))] relative overflow-hidden border-b border-[hsl(var(--border-primary))]">
                     <OutpostMapPreview outpost={outpost} />
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[hsl(var(--bg-secondary))] via-transparent to-transparent opacity-20" />
-                    <Badge variant="outline" className="absolute top-3 right-3 z-[400] bg-[hsl(var(--bg-secondary))]/90 backdrop-blur border-[hsl(var(--border-primary))] text-xs font-mono text-[hsl(var(--text-secondary))] shadow-sm">
+                    <Badge variant="outline" className="absolute top-3 right-3 z-45 bg-[hsl(var(--bg-secondary))]/90 backdrop-blur border-[hsl(var(--border-primary))] text-xs font-mono text-[hsl(var(--text-secondary))] shadow-sm">
                         {outpost.latitude.toFixed(4)}, {outpost.longitude.toFixed(4)}
                     </Badge>
                 </div>

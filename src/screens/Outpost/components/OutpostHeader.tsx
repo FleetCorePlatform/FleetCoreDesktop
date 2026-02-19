@@ -1,7 +1,7 @@
 import { ArrowLeft, Plus, MapPin, Wrench } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
 import { Link } from "react-router-dom";
-import { OutpostSummary } from "@/models/Outpost.ts";
+import {OutpostSummary} from "@/screens/common/types.ts";
 
 interface OutpostHeaderProps {
     outpost: OutpostSummary;

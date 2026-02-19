@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { apiCall } from "@/utils/api.ts";
 import "leaflet/dist/leaflet.css";
 
-import { Outpost } from "@/screens/Outpost/types";
 import { OutpostListHeader } from "./components/OutpostListHeader";
 import { OutpostListStats } from "./components/OutpostListStats";
 import { OutpostListGrid } from "./components/OutpostListGrid";
+import {Outpost} from "@/screens/common/types.ts";
 
 export default function OutpostListScreen() {
     const [outposts, setOutposts] = useState<Outpost[]>([]);
@@ -43,7 +43,7 @@ export default function OutpostListScreen() {
     useEffect(() => {
         const fetchOutposts = async () => {
             try {
-                const data = await apiCall('/api/v1/outposts', undefined, "GET");
+                const data = await apiCall<Outpost>('/api/v1/outposts', undefined, "GET");
 
                 if (Array.isArray(data)) {
                     const isSamePoint = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {

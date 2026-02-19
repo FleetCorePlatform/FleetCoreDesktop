@@ -1,6 +1,6 @@
 import { Search, MapPin } from 'lucide-react';
 import { OutpostCard } from "./OutpostCard";
-import { Outpost } from "@/screens/Outpost/types";
+import {Outpost} from "@/screens/common/types.ts";
 
 interface OutpostListGridProps {
     loading: boolean;

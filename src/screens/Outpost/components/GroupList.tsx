@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Link } from "react-router-dom";
-import { GroupSummary, OutpostSummary } from "@/models/Outpost.ts";
+import {GroupSummary, OutpostSummary} from "@/screens/common/types.ts";
 
 interface GroupListProps {
     filteredGroups: GroupSummary[];
@@ -50,7 +50,7 @@ export function GroupList({ filteredGroups, searchQuery, setSearchQuery, outpost
                                 </Link>
 
                                 <Link
-                                    to={`/missions/new/${outpostUuid}`}
+                                    to={`/missions/new`}
                                     state={{ groupData: group, outpostData: outpost }}
                                 >
                                     <Button variant="outline" size="sm" className="w-full text-xs h-7 border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--bg-tertiary))]">

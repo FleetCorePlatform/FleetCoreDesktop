@@ -1,6 +1,6 @@
 import { Users, Drone } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card.tsx";
-import { OutpostSummary, GroupSummary } from "@/models/Outpost.ts";
+import {GroupSummary, OutpostSummary} from "@/screens/common/types.ts";
 
 interface OutpostStatsProps {
     outpost: OutpostSummary;

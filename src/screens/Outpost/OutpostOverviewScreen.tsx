@@ -1,18 +1,12 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { apiCall } from "@/utils/api.ts";
-import { GroupSummary, OutpostSummary } from "@/models/Outpost.ts";
 import { OutpostHeader } from "./components/OutpostHeader";
 import { OutpostStats } from "./components/OutpostStats";
 import { GroupList } from "./components/GroupList";
 import { CreateGroupDialog } from "./components/CreateGroupDialog";
-
-const GROUP_NAME_REGEX = /^[a-zA-Z0-9:_-]{1,128}$/;
-
-interface CreateGroupBody {
-    outpost_uuid: string;
-    group_name: string;
-}
+import {GroupSummary, OutpostSummary} from "@/screens/common/types.ts";
+import {CreateGroupBody, GROUP_NAME_REGEX} from "@/screens/Outpost/types.ts";
 
 export default function OutpostOverviewScreen() {
     const { outpostUuid } = useParams<{ outpostUuid: string }>();

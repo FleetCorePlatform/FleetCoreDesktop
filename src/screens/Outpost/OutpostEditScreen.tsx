@@ -13,6 +13,7 @@ import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import {useTheme} from "@/ThemeProvider.tsx";
 import { EditMap } from "./components/EditMap";
 import { EditSidebar } from "./components/EditSidebar";
+import {Outpost, OutpostSummary} from "@/screens/common/types.ts";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -22,18 +23,9 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const parseToLatLng = (outpost: any): L.LatLngExpression[] => {
+const parseToLatLng = (outpost: Outpost): L.LatLngExpression[] => {
     let points: Array<{ x: number, y: number }> = [];
-
-    if (outpost.wkt_polygon) {
-        try {
-            const content = outpost.wkt_polygon.replace(/^POLYGON\s*\(\(/, "").replace(/\)\)$/, "");
-            points = content.split(", ").map((pair: string) => {
-                const [x, y] = pair.split(" ").map(Number);
-                return { x, y };
-            });
-        } catch (e) { console.error("WKT Parse Error", e); }
-    } else if (outpost.area?.points) {
+    if (outpost.area?.points) {
         points = outpost.area.points;
     }
     return points.map(p => [p.y, p.x] as [number, number]);
@@ -59,9 +51,10 @@ export default function OutpostEditScreen() {
 
 
     useEffect(() => {
+        if (!outpostUuid) return
         const fetchOutpost = async () => {
             try {
-                const data: any = await apiCall(`/api/v1/outposts/${outpostUuid}/summary`, undefined, "GET");
+                const data: any = await apiCall<OutpostSummary>(`/api/v1/outposts/${outpostUuid}/summary`, undefined, "GET");
                 setName(data.name);
 
                 const coords = parseToLatLng(data);
@@ -74,7 +67,8 @@ export default function OutpostEditScreen() {
                 setLoading(false);
             }
         };
-        if (outpostUuid) fetchOutpost();
+
+        fetchOutpost();
     }, [outpostUuid]);
 
     const handleEdit = (e: any) => {
