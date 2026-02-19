@@ -13,6 +13,7 @@ import { UserCredentials } from '@/screens/common/types.ts';
 export interface ViewerHandle {
   signalingClient: SignalingClient;
   peerConnection: RTCPeerConnection;
+  dataChannel: RTCDataChannel;
 }
 
 export async function startViewer(
@@ -100,6 +101,13 @@ export async function startViewer(
   peerConnection.addTransceiver('video', { direction: 'recvonly' });
   peerConnection.addTransceiver('audio', { direction: 'recvonly' });
 
+  const dataChannel = peerConnection.createDataChannel(
+    "data_stream", {
+      ordered: false,
+      maxRetransmits: 0
+    });
+  dataChannel.binaryType = "arraybuffer";
+
   const signalingClient = new SignalingClient({
     channelARN: channelArn,
     channelEndpoint: endpoints.WSS,
@@ -167,13 +175,14 @@ export async function startViewer(
   console.log('Starting Viewer...');
   signalingClient.open();
 
-  return { signalingClient, peerConnection };
+  return { signalingClient, peerConnection, dataChannel };
 }
 
 export function stopViewer(handle: ViewerHandle | null) {
   if (!handle) return;
-  console.log('Stopping Viewer...');
+  console.log('Stopping Controller...');
   handle.signalingClient.close();
   handle.peerConnection.close();
+  handle.dataChannel.close();
   console.log('WebRTC Resources Released');
 }

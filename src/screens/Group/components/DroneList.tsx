@@ -8,6 +8,7 @@ import {
   SlidersHorizontal,
   Construction,
   Trash2,
+  Gamepad2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -35,6 +36,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
+
+import {Link} from 'react-router-dom';
 
 interface DroneListProps {
   filteredDrones: DroneSummaryModel[];
@@ -202,6 +205,19 @@ export function DroneList({
                       >
                         <ArrowUpRightFromSquareIcon size={14} />
                       </Button>
+
+                      {drone?.uuid && (
+                          <Link to={`/drones/${drone.uuid}/control`} state={{ drone }}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                                title="Open Control Center"
+                            >
+                              <Gamepad2 size={14} />
+                            </Button>
+                          </Link>
+                      )}
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

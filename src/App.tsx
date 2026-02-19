@@ -16,8 +16,10 @@ import OutpostListScreen from '@/screens/Outpost/OutpostScreen.tsx';
 import OutpostCreationScreen from '@/screens/Outpost/OutpostCreationScreen.tsx';
 import OutpostOverviewScreen from '@/screens/Outpost/OutpostOverviewScreen.tsx';
 import MaintenanceScreen from '@/screens/Maintenance/MaintenanceScreen.tsx';
-import DroneDetailsScreen from '@/screens/Drone/DroneDetailScreen.tsx';
+import DroneDetailsScreen from './screens/Drone/DroneDetailScreen.tsx';
+import DroneControlScreen from './screens/Drone/DroneControlScreen.tsx';
 import OutpostEditScreen from '@/screens/Outpost/OutpostEditScreen.tsx';
+
 import GroupOverviewScreen from '@/screens/Group/GroupOverviewScreen.tsx';
 import MissionCreationScreen from '@/screens/Mission/MissionCreationScreen.tsx';
 import MissionHistoryScreen from '@/screens/Mission/MissionHistoryScreen.tsx';
@@ -141,6 +143,7 @@ export default function App() {
               <Route path="/outposts/:outpostUuid" element={<OutpostOverviewScreen />} />
               <Route path="/maintenance/:outpostUuid" element={<MaintenanceScreen />} />
               <Route path="/drones/:droneUuid" element={<DroneDetailsScreen />} />
+              <Route path="/drones/:droneUuid/control" element={<DroneControlScreen />} />
               <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
               <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
               <Route path="/missions/new" element={<MissionCreationScreen />} />

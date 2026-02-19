@@ -1,30 +1,14 @@
 import { ArrowLeft, FileText, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog.tsx';
 import { Drone } from '../types';
-import { CommanderConsole } from './CommanderConsole';
-
 import { NavigateFunction } from 'react-router-dom';
 
 interface DroneHeaderProps {
   drone: Drone;
   navigate: NavigateFunction;
-  isConsoleOpen: boolean;
-  setIsConsoleOpen: (open: boolean) => void;
 }
 
-export function DroneHeader({
-  drone,
-  navigate,
-  isConsoleOpen,
-  setIsConsoleOpen,
-}: DroneHeaderProps) {
+export function DroneHeader({ drone, navigate }: DroneHeaderProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
@@ -51,26 +35,21 @@ export function DroneHeader({
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
+          onClick={() => navigate(`/drones/${drone.uuid}/control`)}
           className="border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))]"
         >
           <FileText size={16} className="mr-2" /> Logs
         </Button>
 
-        {/* --- Console Modal --- */}
-        <Dialog open={isConsoleOpen} onOpenChange={setIsConsoleOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300">
-              <Terminal size={16} className="mr-2" />
-              <span className="font-mono">Console</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-5xl bg-zinc-950 p-0 border-zinc-800 shadow-2xl">
-            <DialogHeader className="sr-only">
-              <DialogTitle>MAVLink Commander</DialogTitle>
-            </DialogHeader>
-            <CommanderConsole droneName={drone.name} droneId={drone.uuid} />
-          </DialogContent>
-        </Dialog>
+        <Button
+          onClick={() => navigate(`/drones/${drone.uuid}/control`)}
+          className="bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300"
+        >
+          <Terminal size={16} className="mr-2" />
+          <span className="font-mono uppercase tracking-widest text-xs font-bold">
+            Control Center
+          </span>
+        </Button>
       </div>
     </div>
   );

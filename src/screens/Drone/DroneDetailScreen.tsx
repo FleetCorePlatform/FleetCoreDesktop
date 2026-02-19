@@ -31,8 +31,6 @@ export default function DroneDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [isConsoleOpen, setIsConsoleOpen] = useState(false);
-
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -54,7 +52,7 @@ export default function DroneDetailsScreen() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center gap-2 text-[hsl(var(--text-secondary))]">
+      <div className="h-full w-full bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center gap-2 text-[hsl(var(--text-secondary))]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--text-primary))]"></div>
         <span className="font-mono text-sm animate-pulse">Establishing uplink...</span>
       </div>
@@ -63,7 +61,7 @@ export default function DroneDetailsScreen() {
 
   if (error || !drone) {
     return (
-      <div className="h-screen w-full bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center gap-4 text-red-500">
+      <div className="h-full w-full bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center gap-4 text-red-500">
         <AlertCircle size={48} />
         <p>{error || 'Drone not found'}</p>
         <Button variant="outline" onClick={() => navigate(-1)}>
@@ -76,20 +74,15 @@ export default function DroneDetailsScreen() {
   const position: [number, number] = [drone.home_position.y, drone.home_position.x];
 
   return (
-    <div className="pb-[4.5em] flex flex-col h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-mono overflow-hidden">
+    <div className="pb-[4.5em] flex flex-col h-full bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-mono overflow-hidden">
       <div className="flex-1 overflow-auto">
         <div className="max-w-[1600px] mx-auto p-4 lg:p-6 space-y-6">
-          <DroneHeader
-            drone={drone}
-            navigate={navigate}
-            isConsoleOpen={isConsoleOpen}
-            setIsConsoleOpen={setIsConsoleOpen}
-          />
+          <DroneHeader drone={drone} navigate={navigate} />
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <DroneVisualizer modelName={drone.model} isConsoleOpen={isConsoleOpen} />
+              <DroneVisualizer modelName={drone.model} isConsoleOpen={false} />
               <DroneStatusGrid drone={drone} />
             </div>
 
