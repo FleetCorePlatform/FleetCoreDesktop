@@ -1,5 +1,5 @@
 import MissionItem from "@/screens/Mission/components/MissionItem.tsx";
-import { Mission } from "@/screens/Mission/types";
+import {Mission} from "@/screens/common/types.ts";
 
 interface HistoryTimelineProps {
     isLoading: boolean;

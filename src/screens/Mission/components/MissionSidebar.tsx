@@ -4,19 +4,12 @@ import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
 import { NavigateFunction } from "react-router-dom";
-
-interface OutpostData {
-    uuid: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    boundary: Array<{ x: number; y: number }>;
-}
+import {OutpostSummary} from "@/screens/common/types.ts";
 
 interface MissionSidebarProps {
     sidebarOpen: boolean;
     setSidebarOpen: (open: boolean) => void;
-    outpost: OutpostData;
+    outpost: OutpostSummary;
     missionAltitude: number[];
     setMissionAltitude: (val: number[]) => void;
     jobName: string;

@@ -4,14 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { PanelLeft } from 'lucide-react';
 import "leaflet/dist/leaflet.css";
-
-interface OutpostData {
-    uuid: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    boundary: Array<{ x: number; y: number }>;
-}
+import {OutpostSummary} from "@/screens/common/types.ts";
 
 function MapController({ points }: { points: L.LatLngExpression[] }) {
     const map = useMap();
@@ -25,7 +18,7 @@ function MapController({ points }: { points: L.LatLngExpression[] }) {
 }
 
 interface MissionMapProps {
-    outpost: OutpostData;
+    outpost: OutpostSummary;
     theme: string;
     polygonPositions: L.LatLngExpression[];
     sidebarOpen: boolean;

@@ -16,7 +16,7 @@ import {
 
 import {Button} from "@/components/ui/button";
 import {apiCall, apiCallFull} from "@/utils/api.ts";
-import {CancelMissionRequest, Mission, MissionBodyEnum, MissionDetails} from "@/screens/Mission/types.ts";
+import {CancelMissionRequest, MissionBodyEnum, MissionDetails} from "@/screens/Mission/types.ts";
 import {Badge} from "@/components/ui/badge.tsx";
 import {
     AlertDialog,
@@ -28,6 +28,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog.tsx";
+import {Mission} from "@/screens/common/types.ts";
 
 export default function MissionItem({ mission, groupUuid, formatTime, getDuration }: {
     mission: Mission,
