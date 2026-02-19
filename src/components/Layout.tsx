@@ -64,7 +64,7 @@ const slideVariants = {
 const sidebarVariants = {
   closed: { x: '-100%', transition: { type: 'spring', stiffness: 300, damping: 30 } },
   open: { x: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
-};
+} as const;
 
 const backdropVariants = {
   closed: { opacity: 0 },
@@ -307,7 +307,7 @@ export default function Layout({ signOut }: LayoutProps) {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 overflow-hidden relative bg-[hsl(var(--bg-primary))]">
+      <div className="flex-1 overflow-hidden relative bg-[hsl(var(--bg-primary))] flex flex-col">
         <AnimatePresence mode="popLayout" custom={direction}>
           <motion.div
             key={location.pathname}
@@ -320,7 +320,7 @@ export default function Layout({ signOut }: LayoutProps) {
               x: { type: 'spring', stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 },
             }}
-            className="h-full w-full bg-[hsl(var(--bg-primary))]"
+            className="flex-1 w-full bg-[hsl(var(--bg-primary))] overflow-hidden flex flex-col"
           >
             <Outlet />
           </motion.div>
