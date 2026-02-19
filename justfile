@@ -19,8 +19,24 @@ build-frontend:
 dev-rust:
     cd src-tauri && cargo run
 
+# Check react frontend for linitng errors
+check-frontend:
+    tsc
+
+# Check rust backend for linitng errors
 check-rust:
     cd src-tauri && cargo check
+
+check component="all":
+    @if [ "{{component}}" = "all" ]; then \
+        just check-frontend; just check-rust; \
+    elif [ "{{component}}" = "frontend" ]; then \
+        just check-frontend; \
+    elif [ "{{component}}" = "rust" ]; then \
+        just check-rust; \
+    else \
+        echo "Invalid component: {{component}}"; exit 1; \
+    fi
 
 # Clean build artifacts
 [confirm("Are you sure you want to clean everything?")]

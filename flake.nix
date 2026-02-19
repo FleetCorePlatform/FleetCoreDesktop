@@ -104,6 +104,7 @@
           binutils
           just
           pkg-config
+          typescript
         ] ++ [
           pkgsUnstable.just
         ];

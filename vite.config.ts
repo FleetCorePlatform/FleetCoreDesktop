@@ -21,6 +21,7 @@ export default defineConfig(async () => ({
               process: true,
           },
           protocolImports: true,
+          exclude: ['crypto']
       }),
   ],
   resolve: {
