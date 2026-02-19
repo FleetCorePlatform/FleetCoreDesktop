@@ -1,3 +1,3 @@
 export interface MissionCountResponse {
-    count: number;
+  count: number;
 }

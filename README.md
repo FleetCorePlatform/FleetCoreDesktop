@@ -11,19 +11,19 @@ FleetCore Desktop is the mission control interface for the FleetCore Project, de
 
 This application serves as the primary ground control station (GCS) client for the FleetCore fleet. It interfaces with the backend orchestration layer to facilitate:
 
-*   **Mission Planning:** Configuration of automated survey parameters, including altitude constraints and target designations.
-*   **Infrastructure Management:** Definition of outposts and operational zones using vector-based geofencing tools.
-*   **Fleet Telemetry:** Real-time monitoring of drone connection status, battery levels, and group assignments.
-*   **Secure Communication:** Implementation of a Rust-based proxy layer to handle authenticated API requests and isolate sensitive credentials.
+- **Mission Planning:** Configuration of automated survey parameters, including altitude constraints and target designations.
+- **Infrastructure Management:** Definition of outposts and operational zones using vector-based geofencing tools.
+- **Fleet Telemetry:** Real-time monitoring of drone connection status, battery levels, and group assignments.
+- **Secure Communication:** Implementation of a Rust-based proxy layer to handle authenticated API requests and isolate sensitive credentials.
 
 ## Architecture
 
 The system utilizes a split-stack architecture to ensure performance and security:
 
-*   **Runtime:** Tauri v2 (utilizing system webview)
-*   **Core Logic:** Rust (Backend interactions, file system access, API proxying)
-*   **User Interface:** React 19, TypeScript, Tailwind CSS
-*   **Geospatial Engine:** Leaflet
+- **Runtime:** Tauri v2 (utilizing system webview)
+- **Core Logic:** Rust (Backend interactions, file system access, API proxying)
+- **User Interface:** React 19, TypeScript, Tailwind CSS
+- **Geospatial Engine:** Leaflet
 
 ## Development Environment
 
@@ -31,18 +31,20 @@ Project dependencies are managed via Nix to ensure reproducibility across develo
 
 ### Prerequisites
 
-*   **Nix Package Manager** (with Flakes enabled)
-*   **Git**
+- **Nix Package Manager** (with Flakes enabled)
+- **Git**
 
 ### Setup
 
 1.  **Initialize Environment**
     Enter the Nix shell to load the required toolchain (Node.js, Rust, Cargo, Tauri CLI, and system libraries):
+
     ```bash
     nix develop
     ```
 
 2.  **Install Dependencies**
+
     ```bash
     npm install
     ```
