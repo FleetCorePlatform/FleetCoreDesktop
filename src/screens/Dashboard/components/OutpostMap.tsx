@@ -12,7 +12,7 @@ import "leaflet/dist/leaflet.css";
 import { latLngBounds } from 'leaflet';
 import { Link } from "react-router-dom";
 import { useMemo, useEffect } from "react";
-import { Outpost } from "../types";
+import {Outpost} from "@/screens/common/types.ts";
 
 interface OutpostMapProps {
     outposts: Outpost[];

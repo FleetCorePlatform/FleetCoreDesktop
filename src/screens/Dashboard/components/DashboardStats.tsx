@@ -7,8 +7,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip.tsx";
-import {MissionCountResponse, Outpost} from "../types";
-import {Health} from "@/screens/common/types.ts";
+import {MissionCountResponse} from "../types";
+import {Health, Outpost} from "@/screens/common/types.ts";
 
 interface DashboardStatsProps {
     missionCount: MissionCountResponse;

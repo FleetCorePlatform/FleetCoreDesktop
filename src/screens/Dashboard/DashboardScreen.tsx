@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiCall } from "@/utils/api";
 import { useTheme } from "@/ThemeProvider";
-import {MissionCountResponse, Outpost} from "./types";
+import {MissionCountResponse} from "./types";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardStats } from "./components/DashboardStats";
 import { MissionFeed } from "./components/MissionFeed";
 import { OutpostMap } from "./components/OutpostMap";
-import { Health, Mission } from "@/screens/common/types.ts";
+import {Health, Mission, Outpost} from "@/screens/common/types.ts";
 
 export default function DashboardScreen() {
     const [missions, setMissions] = useState<Mission[]>([]);
