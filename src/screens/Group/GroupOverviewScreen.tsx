@@ -112,7 +112,7 @@ export default function GroupOverviewScreen() {
             try {
                 const groupPromise = apiCall<GroupModel>(`/api/v1/groups/${groupUuid}`, undefined, "GET");
                 const dronesPromise = apiCall<DroneSummaryModel[]>(
-                    `/api/v1/groups?group_uuid=${groupUuid}&limit=10`, undefined, "GET"
+                    `/api/v1/groups/${groupUuid}/drones`, {"limit": 10}, "GET"
                 );
 
                 const [groupDetails, dronesSummary] = await Promise.all([groupPromise, dronesPromise]);
