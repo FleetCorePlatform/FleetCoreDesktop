@@ -278,7 +278,7 @@ export default function GroupOverviewScreen() {
       }
     }
 
-    let payload: PatchDroneRequestModel = {
+    const payload: PatchDroneRequestModel = {
       groupName: editField === 'group' ? editValue : editingDrone.group_name,
       droneName: editField === 'name' ? editValue : editingDrone.name,
       address: editField === 'address' ? editValue : editingDrone.address,

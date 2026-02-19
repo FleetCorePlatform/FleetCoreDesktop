@@ -15,7 +15,7 @@ import { DroneStatusGrid } from './components/DroneStatusGrid';
 import { DroneMap } from './components/DroneMap';
 import { DroneCapabilities } from './components/DroneCapabilities';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],

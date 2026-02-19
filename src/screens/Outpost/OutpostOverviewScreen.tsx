@@ -26,7 +26,7 @@ export default function OutpostOverviewScreen() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let outpostOverview: OutpostSummary = await apiCall(
+        const outpostOverview: OutpostSummary = await apiCall(
           `/api/v1/outposts/${outpostUuid}/summary`,
           undefined,
           'GET'

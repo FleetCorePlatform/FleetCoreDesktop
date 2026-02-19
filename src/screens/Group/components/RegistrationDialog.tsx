@@ -31,7 +31,7 @@ import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 import { AVAILABLE_CAPABILITIES, RegisteredDroneResponse } from '../types';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],

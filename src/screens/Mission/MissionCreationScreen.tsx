@@ -12,7 +12,7 @@ import { apiCallFull } from '@/utils/api.ts';
 import { CreateMissionRequest } from '@/screens/Mission/types.ts';
 import { GroupSummary, OutpostSummary } from '@/screens/common/types.ts';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],

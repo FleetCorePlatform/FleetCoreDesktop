@@ -15,7 +15,7 @@ import { EditMap } from './components/EditMap';
 import { EditSidebar } from './components/EditSidebar';
 import { Outpost, OutpostSummary } from '@/screens/common/types.ts';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
