@@ -12,7 +12,6 @@ import DashboardScreen from "./screens/Dashboard/DashboardScreen";
 
 import { UserProvider } from "@/context/UserContext.ts";
 import CoordinatorProfileScreen, { Coordinator } from "./screens/Profile/ProfileScreen";
-import { UserCredentials } from "@/models/User.ts";
 import OutpostListScreen from "@/screens/Outpost/OutpostScreen.tsx";
 import OutpostCreationScreen from "@/screens/Outpost/OutpostCreationScreen.tsx";
 import OutpostOverviewScreen from "@/screens/Outpost/OutpostOverviewScreen.tsx";
@@ -23,6 +22,7 @@ import GroupOverviewScreen from "@/screens/Group/GroupOverviewScreen.tsx";
 import MissionCreationScreen from "@/screens/Mission/MissionCreationScreen.tsx";
 import MissionHistoryScreen from "@/screens/Mission/MissionHistoryScreen.tsx";
 import DetectionReviewScreen from "@/screens/Mission/MissionDetectionsScreen.tsx";
+import {UserCredentials} from "@/screens/common/types.ts";
 
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -139,7 +139,7 @@ export default function App() {
                             <Route path="/drones/:droneUuid" element={<DroneDetailsScreen />} />
                             <Route path="/outposts/:outpostUuid/edit" element={<OutpostEditScreen />} />
                             <Route path="/groups/:groupUuid/:outpostUuid" element={<GroupOverviewScreen />} />
-                            <Route path="/missions/new/:outpostUuid" element={<MissionCreationScreen />} />
+                            <Route path="/missions/new" element={<MissionCreationScreen />} />
                             <Route path="/missions/:groupUuid" element={<MissionHistoryScreen />} />
                             <Route path="/detections/:groupUuid/:missionUuid" element={<DetectionReviewScreen />} />
                             <Route path="/profile" element={<CoordinatorProfileScreen profile={profile} />} />

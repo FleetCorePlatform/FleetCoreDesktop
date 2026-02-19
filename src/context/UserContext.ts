@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
-import { Coordinator } from "@/screens/ProfileScreen";
-import { UserCredentials } from "@/models/User"; // Ensure this model exists
+import {UserCredentials} from "@/screens/common/types.ts";
+import {Coordinator} from "@/screens/Profile/types.ts";
 
 interface UserContextType {
     user: Coordinator | null;

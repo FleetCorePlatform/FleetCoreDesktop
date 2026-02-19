@@ -1,7 +1,7 @@
 import { SignalingClient, Role } from "amazon-kinesis-video-streams-webrtc";
 import { KinesisVideoClient, DescribeSignalingChannelCommand, GetSignalingChannelEndpointCommand } from "@aws-sdk/client-kinesis-video";
 import { KinesisVideoSignalingClient, GetIceServerConfigCommand } from "@aws-sdk/client-kinesis-video-signaling";
-import { UserCredentials } from "@/models/User.ts";
+import {UserCredentials} from "@/screens/common/types.ts";
 
 export interface ViewerHandle {
     signalingClient: SignalingClient;
