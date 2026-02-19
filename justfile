@@ -2,7 +2,25 @@
 [group('Development')]
 [arg("target", help='Platform: mac, windows, linux, android, ios, ""')]
 dev target="":
-    cargo tauri {{ if target == "" { "dev" } else { target + " dev" } }}
+    #!/usr/bin/env sh
+    NIX_GL_CMD=""
+    IFS=:
+    for dir in $PATH; do
+        for file in "$dir"/nixGLNvidia*; do
+            if [ -x "$file" ] && [ -f "$file" ]; then
+                NIX_GL_CMD="$file"
+                break 2
+            fi
+        done
+    done
+    unset IFS
+
+    if [ -n "$NIX_GL_CMD" ]; then
+        exec "$NIX_GL_CMD" cargo tauri dev
+    else
+        exec cargo tauri {{ if target == "" { "dev" } else { target + " dev" } }}
+    fi
+
 
 # Frontend only
 [group('Development')]
@@ -32,8 +50,8 @@ build-frontend:
 
 # Create installer
 [group('Build')]
-bundle:
-    cargo tauri build --bundles deb rpm
+bundle: build
+    cargo tauri build
 
 # Generate icons
 [group('Build')]
@@ -99,4 +117,3 @@ update:
 clean:
     cd src-tauri && cargo clean
     rm -rf dist/
-    rm -rf src-tauri/target/

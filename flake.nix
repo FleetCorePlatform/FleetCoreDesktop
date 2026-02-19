@@ -5,9 +5,10 @@
     nixpkgs-linux.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-darwin.url = "github:nixos/nixpkgs/nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
+    nixgl.url = "github:nix-community/nixGL";
   };
 
-  outputs = { self, nixpkgs-linux, nixpkgs-darwin, flake-utils }:
+  outputs = { self, nixpkgs-linux, nixpkgs-darwin, flake-utils, nixgl }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         isLinux = builtins.match ".*linux.*" system != null;
@@ -18,6 +19,7 @@
             allowUnfree = true;
             android_sdk.accept_license = true;
           };
+          overlays = [ nixgl.overlay ];
         };
 
         inherit (pkgs) lib;
@@ -72,6 +74,7 @@
           libpulseaudio
           alsa-lib
           libnice
+          steam-run
         ];
 
         linuxGstreamer = with pkgs.gst_all_1; [
@@ -117,7 +120,7 @@
             ++ lib.optionals (!isLinux) darwinFrameworks;
 
           nativeBuildInputs = with pkgs; [ pkg-config ]
-            ++ lib.optionals isLinux [ wrapGAppsHook4 xdotool ];
+            ++ lib.optionals isLinux [ wrapGAppsHook4 xdotool pkgs.nixgl.auto.nixGLNvidia ];
 
           packages = lib.optionals isLinux [
             androidSdk
@@ -152,26 +155,35 @@
 
             # --- Linux Hooks (GStreamer / WebKit / Nvidia) ---
             ${lib.optionalString isLinux ''
-              export LD_LIBRARY_PATH=/run/opengl-driver/lib:${lib.makeLibraryPath (linuxLibraries ++ linuxGstreamer)}:${pkgs.gst_all_1.gst-plugins-base}/lib:${pkgs.gst_all_1.gst-plugins-bad}/lib:${pkgs.mesa}/lib:${pkgs.libglvnd}/lib:$LD_LIBRARY_PATH
+              export LD_LIBRARY_PATH=${lib.makeLibraryPath (linuxLibraries ++ linuxGstreamer)}:$LD_LIBRARY_PATH
 
               export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules/"
-              export GST_PLUGIN_SYSTEM_PATH_1_0=${pkgs.gst_all_1.gstreamer}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-libav}/lib/gstreamer-1.0:${pkgs.libnice.out}/lib/gstreamer-1.0
 
-              # GPU / WebRTC Workarounds
-              if ! command -v nvidia-smi >/dev/null 2>&1; then
-                  export WEBKIT_DISABLE_COMPOSITING_MODE=1
-                  export WEBKIT_DISABLE_DMABUF_RENDERER=1
-                  export LIBGL_ALWAYS_SOFTWARE=1
-                  echo "Nvidia not detected."
-              else
-                  export WEBKIT_DISABLE_COMPOSITING_MODE=1
-                  export WEBKIT_DISABLE_DMABUF_RENDERER=1
-                  export LIBGL_ALWAYS_SOFTWARE=1
-                  export WEBKIT_GST_DMABUF_SINK_ENABLED=0
-                  echo "Nvidia detected: Disabling DMABuf sink."
-              fi
+              export GST_PLUGIN_SYSTEM_PATH_1_0=${lib.concatMapStringsSep ":" (pkg: "${pkg}/lib/gstreamer-1.0") (with pkgs.gst_all_1; [
+                gstreamer.out
+                gst-plugins-base
+                gst-plugins-good
+                gst-plugins-bad
+                gst-plugins-ugly
+                gst-libav
+              ] ++ [ pkgs.libnice ])}
 
-              export GDK_BACKEND=x11
+              export GST_PLUGIN_PATH=$GST_PLUGIN_SYSTEM_PATH_1_0
+
+              # Nvidia hardware acceleration
+              export __GLX_VENDOR_LIBRARY_NAME=nvidia
+              export __GL_GSYNC_ALLOWED=1
+              export __GL_VRR_ALLOWED=1
+              export LIBVA_DRIVER_NAME=nvidia
+              export VDPAU_DRIVER=nvidia
+              export LIBGL_ALWAYS_SOFTWARE=0
+              export WEBKIT_FORCE_COMPOSITING_MODE=1
+              export NVD_BACKEND=direct
+              export GST_VAAPI_ALL_DRIVERS=1
+              export WEBKIT_FORCE_SANDBOX=0
+              export WEBKIT_DISABLE_COMPOSITING_MODE=0
+              export WEBKIT_DISABLE_DMABUF_RENDERER=1
+
               export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS"
             ''}
           '';
