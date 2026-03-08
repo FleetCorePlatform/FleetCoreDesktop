@@ -1,6 +1,6 @@
 # Start development server
 [group('Development')]
-[arg("target", help='Platform: mac, windows, linux, android, ios, ""')]
+[arg("target", x='Platform: mac, windows, linux, android, ios, ""')]
 dev target="":
     #!/usr/bin/env sh
     NIX_GL_CMD=""
