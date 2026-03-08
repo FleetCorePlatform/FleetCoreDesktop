@@ -21,7 +21,6 @@ import { DroneList } from './components/DroneList';
 import { RegistrationDialog, RegFormState } from './components/RegistrationDialog';
 import { MaintenanceDialog } from './components/MaintenanceDialog';
 import { EditDroneDialog } from './components/EditDroneDialog';
-import { CameraDialog } from './components/CameraDialog';
 import { DecommissionDialog } from './components/DecommissionDialog';
 import { DeleteGroupDialog } from './components/DeleteGroupDialog';
 
@@ -48,9 +47,6 @@ export default function GroupOverviewScreen() {
   const [isDecommissionOpen, setIsDecommissionOpen] = useState(false);
   const [decommissionDrone, setDecommissionDrone] = useState<DroneSummaryModel | null>(null);
   const [decommissionInput, setDecommissionInput] = useState('');
-
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [cameraDrone, setCameraDrone] = useState<DroneSummaryModel | null>(null);
 
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
   const [maintenanceDrone, setMaintenanceDrone] = useState<DroneSummaryModel | null>(null);
@@ -297,11 +293,6 @@ export default function GroupOverviewScreen() {
       });
   };
 
-  const openCamera = (drone: DroneSummaryModel) => {
-    setCameraDrone(drone);
-    setIsCameraOpen(true);
-  };
-
   if (loading) {
     return (
       <div className="p-8 text-center text-[hsl(var(--text-secondary))]">Loading fleet data...</div>
@@ -330,7 +321,6 @@ export default function GroupOverviewScreen() {
             filteredDrones={filteredDrones}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            onCameraClick={openCamera}
             onViewDetailsClick={(uuid) => navigate(`/drones/${uuid}`)}
             onEditClick={openEditModal}
             onMaintenanceClick={openMaintenanceModal}
@@ -398,8 +388,6 @@ export default function GroupOverviewScreen() {
         setInput={setDecommissionInput}
         onConfirm={confirmDecommission}
       />
-
-      <CameraDialog open={isCameraOpen} onOpenChange={setIsCameraOpen} drone={cameraDrone} />
 
       <EditDroneDialog
         open={isDialogOpen}

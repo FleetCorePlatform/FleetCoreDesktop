@@ -3,7 +3,6 @@ import {
   Network,
   MapPin,
   Battery,
-  ScanEye,
   ArrowUpRightFromSquareIcon,
   SlidersHorizontal,
   Construction,
@@ -41,7 +40,6 @@ import {Link} from 'react-router-dom';
 
 interface DroneListProps {
   filteredDrones: DroneSummaryModel[];
-  onCameraClick: (drone: DroneSummaryModel) => void;
   onViewDetailsClick: (uuid: string) => void;
   onEditClick: (drone: DroneSummaryModel, field: EditDroneField) => void;
   onMaintenanceClick: (drone: DroneSummaryModel) => void;
@@ -54,7 +52,6 @@ export function DroneList({
   filteredDrones,
   searchQuery,
   setSearchQuery,
-  onCameraClick,
   onViewDetailsClick,
   onEditClick,
   onMaintenanceClick,
@@ -187,15 +184,6 @@ export function DroneList({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onCameraClick(drone)}
-                        className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
-                        title="View Camera Feed"
-                      >
-                        <ScanEye size={14} />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
