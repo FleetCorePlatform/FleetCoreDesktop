@@ -12,6 +12,11 @@ export enum ControlStatus {
   ACTIVE = "ACTIVE",
 }
 
+export enum ControlActions {
+  TAKEOFF = "TAKEOFF",
+  LAND = "LAND",
+}
+
 export interface HandshakeReqPacket {
   type: PacketType.HANDSHAKE_REQ;
   payload: {
@@ -32,16 +37,16 @@ export interface ManualControlState {
   roll: number;
   throttle: number;
   yaw: number;
-  buttons: {
-    land: boolean;
-    takeoff: boolean;
-  };
+}
+
+export interface ManualControlActionState {
+  action: ControlActions;
 }
 
 export interface ControlPacket {
   type: PacketType.CONTROL;
   sequenceId: number;
-  payload: ManualControlState;
+  payload: ManualControlState | ManualControlActionState;
 }
 
 export type DataChannelPacket = HandshakeReqPacket | HandshakeAckPacket | ControlPacket;
@@ -125,7 +130,7 @@ export const releaseManualControl = () => {
   console.log("[CONTROL] Handshake Released");
 };
 
-export const sendManualControl = (state: ManualControlState) => {
+export function sendManualControl(payload: ManualControlState | ManualControlActionState) {
   if (currentStatus !== ControlStatus.ACTIVE || !activeDataChannel) return;
 
   const now = Date.now();
@@ -135,7 +140,7 @@ export const sendManualControl = (state: ManualControlState) => {
   const packet: ControlPacket = {
     type: PacketType.CONTROL,
     sequenceId: ++controlSequenceId,
-    payload: state,
+    payload: payload,
   };
 
   try {

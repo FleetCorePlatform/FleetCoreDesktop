@@ -1,13 +1,16 @@
-import { useEffect } from 'react';
+import {useCallback, useEffect, useRef} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
-import { useGamepad } from '@/hooks/useGamepad';
-import { DroneControlCamera } from './components/DroneControlCamera';
-import { DroneTerminal } from './components/DroneTerminal';
-import { sendManualControl, ManualControlState } from '@/utils/droneManualControl';
-import { ChevronLeft, Gamepad2, Info, LayoutDashboard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
-import { useCallback, useRef } from 'react';
+import {useGamepad} from '@/hooks/useGamepad';
+import {DroneControlCamera} from './components/DroneControlCamera';
+import {DroneTerminal} from './components/DroneTerminal';
+import {
+  ControlActions,
+  ManualControlActionState,
+  ManualControlState,
+  sendManualControl
+} from '@/utils/droneManualControl';
+import {AlertCircle, ChevronLeft, Gamepad2, Info, LayoutDashboard} from 'lucide-react';
+import {Button} from '@/components/ui/button';
 import {DroneSummaryModel} from "@/screens/Group/types.ts";
 
 export default function DroneControlScreen() {
@@ -21,7 +24,6 @@ export default function DroneControlScreen() {
     roll: 0,
     throttle: 0.5,
     yaw: 0,
-    buttons: { land: false, takeoff: false },
   });
 
   const onGamepadDirectUpdate = useCallback(
@@ -37,10 +39,6 @@ export default function DroneControlScreen() {
         pitch: scaleAxis(-gp.axes[3]),
         throttle: Math.max(0.0, Math.min(1.0, (-scaleAxis(gp.axes[1]) + 1) / 2)),
         yaw: scaleAxis(gp.axes[0]),
-        buttons: {
-          land: gp.buttons[1].pressed,
-          takeoff: gp.buttons[0].pressed,
-        },
       };
 
       manualControlRef.current = newState;
@@ -52,10 +50,22 @@ export default function DroneControlScreen() {
 
   const handleTakeoff = () => {
     console.log('Initiating autonomous takeoff...');
+
+    const payload: ManualControlActionState = {
+      action: ControlActions.TAKEOFF
+    }
+
+    sendManualControl(payload)
   };
 
   const handleLand = () => {
     console.log('Initiating landing sequence...');
+
+    const payload: ManualControlActionState = {
+      action: ControlActions.LAND
+    }
+
+    sendManualControl(payload)
   };
 
   const handleControlMove = (side: 'left' | 'right', x: number, y: number) => {
