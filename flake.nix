@@ -108,6 +108,7 @@
           just
           pkg-config
           typescript
+	  bun
         ] ++ [
           pkgsUnstable.just
         ];
