@@ -124,14 +124,18 @@ export async function startViewer(
 
   peerConnection.ontrack = (event) => {
     console.log('Track received:', event.track.kind);
-    const stream = event.streams && event.streams.length > 0
-      ? event.streams[0]
-      : new MediaStream([event.track])
 
-    if (videoElement.srcObject !== stream) {
-      videoElement.srcObject = stream;
-      videoElement.play().catch(e => console.error(
-        'Autoplay prevented', e));
+    if (event.streams && event.streams.length > 0) {
+      if (videoElement.srcObject !== event.streams[0]) {
+        videoElement.srcObject = event.streams[0];
+        videoElement.play().catch(e => console.error('Autoplay prevented', e));
+      }
+    } else {
+      if (!videoElement.srcObject) {
+        videoElement.srcObject = new MediaStream();
+        videoElement.play().catch(e => console.error('Autoplay prevented', e));
+      }
+      (videoElement.srcObject as MediaStream).addTrack(event.track);
     }
   };
 
