@@ -1,7 +1,7 @@
 # Start development server
 [group('Development')]
 [arg("target", help='Platform: mac, windows, linux, android, ios, ""')]
-dev target="":
+dev target="": install
     #!/usr/bin/env sh
     NIX_GL_CMD=""
     IFS=:
@@ -25,7 +25,7 @@ dev target="":
 # Frontend only
 [group('Development')]
 dev-frontend:
-    npm run dev
+    bun run dev
 
 # Rust backend only
 [group('Development')]
@@ -35,7 +35,7 @@ dev-rust:
 # Mock API server
 [group('Development')]
 mock openapi_yaml="api.yaml" port="8080" *args="":
-    npx @stoplight/prism-cli mock -d {{ openapi_yaml }} -p {{ port }} {{ args }}
+    bun run @stoplight/prism-cli mock -d {{ openapi_yaml }} -p {{ port }} {{ args }}
 
 # Build for production
 [group('Build')]
@@ -46,7 +46,7 @@ build target="default":
 # Build frontend only
 [group('Build')]
 build-frontend:
-    npm run build
+    bun run build
 
 # Create installer
 [group('Build')]
@@ -56,7 +56,7 @@ bundle: build
 # Generate icons
 [group('Build')]
 icons:
-    cargo tauri icon public/logo.svg
+    cargo tauri icon src-tauri/icons/icon.png
 
 # Check react frontend for typescript errors
 [group('QA')]
@@ -84,13 +84,13 @@ check component="all":
 # Lint the frontend and backend
 [group('QA')]
 lint:
-    npx run eslint
+    bun run eslint
     cd src-tauri && cargo clippy
 
 # Format code
 [group('QA')]
 format:
-    npx prettier . --write
+    bun run prettier . --write
     cd src-tauri && cargo fmt
 
 # Run tests
@@ -102,13 +102,13 @@ test:
 # Install dependencies
 [group('Maintenance')]
 install:
-    npm install
+    @bun install
     cd src-tauri && cargo fetch
 
 # Update dependencies
 [group('Maintenance')]
 update:
-    npm update
+    bun update
     cd src-tauri && cargo update
 
 # Clean build artifacts
