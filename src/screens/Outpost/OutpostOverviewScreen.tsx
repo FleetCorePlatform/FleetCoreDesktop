@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { apiCall } from '@/utils/api.ts';
+import { apiCall, apiCallFull } from '@/utils/api.ts';
 import { OutpostHeader } from './components/OutpostHeader';
 import { OutpostStats } from './components/OutpostStats';
 import { GroupList } from './components/GroupList';
@@ -64,19 +64,26 @@ export default function OutpostOverviewScreen() {
       group_name: newGroupName,
     };
 
-    await apiCall('/api/v1/groups', undefined, 'POST', payload)
-      .then(() => {
-        setIsDialogOpen(false);
-        setNewGroupName('');
-      })
-      .catch((e) => {
-        console.error('Failed to create group', e);
+    try {
+      await apiCallFull('/api/v1/groups', undefined, 'POST', payload);
+      setIsDialogOpen(false);
+      setNewGroupName('');
+      navigate(0);
+    } catch (e: unknown) {
+      const status = (e as { status?: number })?.status;
+      if (status === 409) {
+        setGroupNameError('A group with this name already exists.');
+      } else if (status === 400) {
+        setGroupNameError('Invalid group name or request.');
+      } else if (status === 403) {
+        setGroupNameError('You do not have permission to create groups.');
+      } else {
         setGroupNameError('Failed to create group. Please try again.');
-      })
-      .finally(() => {
-        setIsCreating(false);
-        navigate(0);
-      });
+        console.error('Failed to create group', e);
+      }
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const openDialog = () => {

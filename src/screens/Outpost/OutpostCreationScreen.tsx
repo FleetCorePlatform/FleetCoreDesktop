@@ -70,6 +70,7 @@ function OutpostCreationScreen() {
   const [polygonPoints, setPolygonPoints] = useState<{ x: number; y: number }[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const { theme } = useTheme();
 
@@ -234,6 +235,7 @@ function OutpostCreationScreen() {
   const handleDrawStart = (e: any) => {
     if (e.layerType === 'polygon') {
       setIsClosed(false);
+      setIsEditing(true)
       // setPolygonPoints([]);
     }
   };
@@ -297,6 +299,7 @@ function OutpostCreationScreen() {
             handleDeleted={handleDeleted}
             handleEdited={handleEdited}
             handleDrawStart={handleDrawStart}
+            handleDrawStop={() => setIsEditing(false)}
           />
 
           <Button
@@ -324,7 +327,7 @@ function OutpostCreationScreen() {
             setLocationWarning={setLocationWarning}
           />
 
-          <CreationStatus isClosed={isClosed} />
+          <CreationStatus shown={isEditing} isClosed={isClosed} />
         </main>
       </div>
     </div>

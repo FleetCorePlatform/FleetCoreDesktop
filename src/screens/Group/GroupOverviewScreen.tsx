@@ -321,7 +321,6 @@ export default function GroupOverviewScreen() {
             filteredDrones={filteredDrones}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            onViewDetailsClick={(uuid) => navigate(`/drones/${uuid}`)}
             onEditClick={openEditModal}
             onMaintenanceClick={openMaintenanceModal}
             onDecommissionClick={openDecommissionModal}

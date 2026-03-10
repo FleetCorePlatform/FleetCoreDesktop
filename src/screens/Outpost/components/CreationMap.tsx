@@ -12,6 +12,7 @@ interface CreationMapProps {
   handleDeleted: () => void;
   handleEdited: (e: any) => void;
   handleDrawStart: (e: any) => void;
+  handleDrawStop: (e: any) => void;
 }
 
 function MapController({ target }: { target: { lat: number; lng: number } | null }) {
@@ -32,6 +33,7 @@ export function CreationMap({
   handleDeleted,
   handleEdited,
   handleDrawStart,
+  handleDrawStop,
 }: CreationMapProps) {
   return (
     <MapContainer
@@ -58,6 +60,7 @@ export function CreationMap({
           onCreated={handleCreated}
           onDeleted={handleDeleted}
           onDrawStart={handleDrawStart}
+          onDrawStop={handleDrawStop}
           onEdited={handleEdited}
           draw={drawConfig}
         />

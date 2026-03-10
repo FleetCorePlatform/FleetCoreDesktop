@@ -3,11 +3,10 @@ import {
   Network,
   MapPin,
   Battery,
-  ArrowUpRightFromSquareIcon,
   SlidersHorizontal,
   Construction,
   Trash2,
-  Gamepad2,
+  Joystick,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -40,7 +39,6 @@ import {Link} from 'react-router-dom';
 
 interface DroneListProps {
   filteredDrones: DroneSummaryModel[];
-  onViewDetailsClick: (uuid: string) => void;
   onEditClick: (drone: DroneSummaryModel, field: EditDroneField) => void;
   onMaintenanceClick: (drone: DroneSummaryModel) => void;
   onDecommissionClick: (drone: DroneSummaryModel) => void;
@@ -52,7 +50,6 @@ export function DroneList({
   filteredDrones,
   searchQuery,
   setSearchQuery,
-  onViewDetailsClick,
   onEditClick,
   onMaintenanceClick,
   onDecommissionClick,
@@ -137,8 +134,13 @@ export function DroneList({
                   <TableCell>
                     {drone.home_position ? (
                       <div className="flex items-center gap-2 text-xs font-mono text-[hsl(var(--text-secondary))]">
-                        <MapPin size={14} />
-                        X:{drone.home_position.x}, Y:{drone.home_position.y}
+                        <MapPin size={14} className="shrink-0" />
+                        <div className="grid grid-cols-[auto_1fr] gap-x-2">
+                          <span className="inline-block w-[13ch]">
+                            Lat:{drone.home_position.x.toFixed(4)}
+                          </span>
+                          <span>Lon:{drone.home_position.y.toFixed(4)}</span>
+                        </div>
                       </div>
                     ) : (
                       <span className="text-xs text-[hsl(var(--text-muted))] italic">Not Set</span>
@@ -154,16 +156,16 @@ export function DroneList({
                   </TableCell>
                   <TableCell className="w-[150px]">
                     <div className="flex items-center gap-3">
-                      <Battery
-                        size={16}
-                        className={
-                          drone.remaining_percent != null && drone.remaining_percent < 20
-                            ? 'text-red-400'
-                            : 'text-[hsl(var(--text-secondary))]'
-                        }
-                      />
                       {drone.remaining_percent != null ? (
                         <>
+                          <Battery
+                            size={16}
+                            className={
+                              drone.remaining_percent < 20
+                                ? 'text-red-400'
+                                : 'text-[hsl(var(--text-secondary))]'
+                            }
+                          />
                           <Progress
                             value={drone.remaining_percent}
                             className="h-1.5 w-full bg-[hsl(var(--bg-tertiary))]"
@@ -184,27 +186,17 @@ export function DroneList({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewDetailsClick(drone.uuid)}
-                        className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
-                        title="View details"
-                      >
-                        <ArrowUpRightFromSquareIcon size={14} />
-                      </Button>
-
                       {drone?.uuid && (
-                          <Link to={`/drones/${drone.uuid}/control`} state={{ drone }}>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
-                                title="Open Control Center"
-                            >
-                              <Gamepad2 size={14} />
-                            </Button>
-                          </Link>
+                        <Link to={`/drones/${drone.uuid}/control`} state={{ drone }}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                            title="Open Control Center"
+                          >
+                            <Joystick size={14} />
+                          </Button>
+                        </Link>
                       )}
 
                       <DropdownMenu>
