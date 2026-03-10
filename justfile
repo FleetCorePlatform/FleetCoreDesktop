@@ -1,6 +1,6 @@
 # Start development server
 [group('Development')]
-[arg("target", x='Platform: mac, windows, linux, android, ios, ""')]
+[arg("target", help='Platform: mac, windows, linux, android, ios, ""')]
 dev target="":
     #!/usr/bin/env sh
     NIX_GL_CMD=""
@@ -56,7 +56,7 @@ bundle: build
 # Generate icons
 [group('Build')]
 icons:
-    cargo tauri icon src-tauri/icons/icon.png
+    cargo tauri icon public/logo.svg
 
 # Check react frontend for typescript errors
 [group('QA')]
