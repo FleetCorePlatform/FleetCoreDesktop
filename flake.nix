@@ -121,7 +121,7 @@
             ++ lib.optionals (!isLinux) darwinFrameworks;
 
           nativeBuildInputs = with pkgs; [ pkg-config ]
-            ++ lib.optionals isLinux [ wrapGAppsHook4 xdotool pkgs.nixgl.auto.nixGLNvidia ];
+            ++ lib.optionals isLinux [ wrapGAppsHook4 xdotool ];
 
           packages = lib.optionals isLinux [
             androidSdk
