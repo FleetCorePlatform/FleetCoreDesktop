@@ -91,3 +91,6 @@ export interface CommandAckPacket {
 }
 
 export type DataChannelPacket = HandshakeReqPacket | HandshakeAckPacket | ControlPacket | CommandAckPacket | CommandReqPacket;
+
+export type StreamState = 'idle' | 'pending' | 'active';
+export type ControlScreenSelectedView = 'control' | 'info';

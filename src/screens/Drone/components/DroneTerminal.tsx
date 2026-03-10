@@ -6,9 +6,10 @@ import {sendShellCommand, setCmdResponseListener} from "@/utils/droneManualContr
 
 interface DroneTerminalProps {
   droneName: string;
+  connectionActive: boolean
 }
 
-export function DroneTerminal({ droneName }: DroneTerminalProps) {
+export function DroneTerminal({ droneName, connectionActive }: DroneTerminalProps) {
   const [logs, setLogs] = useState<TerminalEntry[]>([]);
   const [telemetry, setTelemetry] = useState<string[]>([]);
   const [input, setInput] = useState('');
@@ -77,107 +78,112 @@ export function DroneTerminal({ droneName }: DroneTerminalProps) {
   };
 
   return (
-      <div className="flex flex-col h-full bg-[#09090b] text-zinc-300 font-mono text-xs overflow-hidden border border-zinc-800 rounded-lg shadow-2xl">
-        <Tabs defaultValue="console" className="flex-1 flex flex-col min-h-0">
-          <div className="h-10 bg-zinc-900/50 border-b border-zinc-800 flex items-center justify-between px-4 select-none shrink-0">
-            <TabsList className="bg-transparent border-none gap-4">
-              <TabsTrigger
-                  value="console"
-                  className="data-[state=active]:bg-transparent data-[state=active]:text-amber-500 data-[state=active]:shadow-none p-0 h-auto font-bold uppercase tracking-wider gap-2 flex items-center"
-              >
-                <Terminal size={14} /> {droneName} - Console
-              </TabsTrigger>
-              <TabsTrigger
-                  value="logs"
-                  className="data-[state=active]:bg-transparent data-[state=active]:text-emerald-500 data-[state=active]:shadow-none p-0 h-auto font-bold uppercase tracking-wider gap-2 flex items-center"
-              >
-                <Activity size={14} /> System Logs
-              </TabsTrigger>
-            </TabsList>
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] text-[hsl(var(--text-secondary))] font-mono text-xs overflow-hidden border border-[hsl(var(--border-primary))] rounded-lg shadow-2xl">
+      <Tabs defaultValue="console" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="h-auto min-h-10 bg-[hsl(var(--bg-secondary))]/50 border-b border-[hsl(var(--border-primary))] flex flex-wrap items-center justify-between px-4 py-1 gap-2 select-none shrink-0">
+          <TabsList className="bg-transparent border-none gap-2 lg:gap-4">
+            <TabsTrigger
+              value="console"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-amber-500 data-[state=active]:shadow-none p-0 h-auto font-bold uppercase tracking-wider gap-1.5 flex items-center text-[10px] lg:text-xs"
+            >
+              <Terminal size={12} />
+              <span className="hidden sm:inline">{droneName} - </span>Console
+            </TabsTrigger>
+            <TabsTrigger
+              value="logs"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-emerald-500 data-[state=active]:shadow-none p-0 h-auto font-bold uppercase tracking-wider gap-1.5 flex items-center text-[10px] lg:text-xs"
+            >
+              <Activity size={12} />
+              <span className="hidden sm:inline">System </span>Logs
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
-              UPLINK ACTIVE
-            </div>
+          <div className="flex items-center gap-2 text-[10px] text-[hsl(var(--text-muted))] shrink-0">
+            <span
+              className={`w-2 h-2 rounded-full ${connectionActive ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'}`}
+            />
+            <span className="hidden sm:inline">UPLINK </span>
+            {connectionActive ? 'ACTIVE' : 'INACTIVE'}
+          </div>
+        </div>
+
+        <TabsContent
+          value="console"
+          className="flex-1 flex-col m-0 relative overflow-hidden bg-[hsl(var(--bg-primary))] min-h-0 data-[state=active]:flex"
+        >
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(hsl(var(--border-primary))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border-primary))_1px,transparent_1px)] bg-[size:20px_20px]" />
+
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-1 font-mono text-[11px] z-10 scrollbar-thin scrollbar-thumb-[hsl(var(--border-primary))] min-h-0"
+          >
+            {logs.map((log, i) => (
+              <div
+                key={i}
+                className={`flex gap-2 ${log.type === 'command' ? 'text-amber-500' : log.type === 'error' ? 'text-red-500' : 'text-[hsl(var(--text-secondary))]'}`}
+              >
+                <span className="opacity-30 select-none w-[30px] text-right shrink-0">
+                  {(i + 1).toString().padStart(3, '0')}
+                </span>
+                <span className="whitespace-pre-wrap break-words">{log.content}</span>
+              </div>
+            ))}
           </div>
 
-          <TabsContent
-              value="console"
-              className="flex-1 flex-col m-0 relative overflow-hidden bg-[#050505] min-h-0 data-[state=active]:flex"
+          <div className="h-9 bg-[hsl(var(--bg-secondary))] border-t border-[hsl(var(--border-primary))] flex items-center px-2 gap-2 shrink-0 z-20">
+            <span className="text-amber-500 px-2 text-xs font-bold">MAV{'>'}</span>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCommand(input)}
+              className="flex-1 bg-transparent border-none outline-none text-xs text-[hsl(var(--text-primary))] placeholder-[hsl(var(--text-muted))] font-mono h-full"
+              placeholder="Enter command..."
+              autoFocus
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent
+          value="logs"
+          className="flex-1 flex-col m-0 relative overflow-hidden bg-[hsl(var(--bg-primary))] min-h-0 data-[state=active]:flex"
+        >
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(hsl(var(--border-primary))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border-primary))_1px,transparent_1px)] bg-[size:20px_20px]" />
+
+          <div
+            ref={teleRef}
+            className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-2 font-mono text-[11px] z-10 scrollbar-thin scrollbar-thumb-[hsl(var(--border-primary))] min-h-0"
           >
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(#333_1px,transparent_1px),linear-gradient(90deg,#333_1px,transparent_1px)] bg-[size:20px_20px]" />
-
-            <div
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[11px] z-10 scrollbar-thin scrollbar-thumb-zinc-800 min-h-0"
-            >
-              {logs.map((log, i) => (
-                  <div
-                      key={i}
-                      className={`flex gap-2 ${log.type === 'command' ? 'text-amber-500' : log.type === 'error' ? 'text-red-500' : 'text-zinc-400'}`}
-                  >
-              <span className="opacity-30 select-none w-[30px] text-right shrink-0">
-                {(i + 1).toString().padStart(3, '0')}
-              </span>
-                    <span className="whitespace-pre-wrap break-words">{log.content}</span>
-                  </div>
-              ))}
-            </div>
-
-            <div className="h-9 bg-zinc-900 border-t border-zinc-800 flex items-center px-2 gap-2 shrink-0 z-20">
-              <span className="text-amber-500 px-2 text-xs font-bold">MAV{'>'}</span>
-              <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCommand(input)}
-                  className="flex-1 bg-transparent border-none outline-none text-xs text-zinc-300 placeholder-zinc-700 font-mono h-full"
-                  placeholder="Enter command..."
-                  autoFocus
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent
-              value="logs"
-              className="flex-1 flex-col m-0 relative overflow-hidden bg-[#050505] min-h-0 data-[state=active]:flex"
-          >
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(#333_1px,transparent_1px),linear-gradient(90deg,#333_1px,transparent_1px)] bg-[size:20px_20px]" />
-
-            <div
-                ref={teleRef}
-                className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-[11px] z-10 scrollbar-thin scrollbar-thumb-zinc-800 min-h-0"
-            >
-              {telemetry.map((log, i) => (
-                  <div
-                      key={i}
-                      className="flex gap-3 border-l-2 border-emerald-500/20 pl-3 py-1 bg-emerald-500/5"
-                  >
-                    <div className="flex flex-col">
-                <span className="text-[9px] text-zinc-600 mb-0.5">
-                  {new Date().toLocaleTimeString()}
-                </span>
-                      <span className="text-emerald-400/80">{log}</span>
-                    </div>
-                  </div>
-              ))}
-            </div>
-
-            <div className="h-7 bg-zinc-900 border-t border-zinc-800 flex items-center justify-between px-4 shrink-0">
-              <div className="flex gap-4">
-                <div className="flex items-center gap-1.5 text-zinc-500">
-                  <Info size={10} /> <span>12 Events</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-zinc-500">
-                  <AlertCircle size={10} /> <span>0 Errors</span>
+            {telemetry.map((log, i) => (
+              <div
+                key={i}
+                className="flex gap-3 border-l-2 border-emerald-500/20 pl-3 py-1 bg-emerald-500/5"
+              >
+                <div className="flex flex-col">
+                  <span className="text-[9px] text-[hsl(var(--text-muted))] mb-0.5">
+                    {new Date().toLocaleTimeString()}
+                  </span>
+                  <span className="text-emerald-400/80">{log}</span>
                 </div>
               </div>
-              <button className="text-[10px] uppercase font-bold text-zinc-600 hover:text-zinc-400">
-                Clear Buffer
-              </button>
+            ))}
+          </div>
+
+          <div className="h-7 bg-[hsl(var(--bg-secondary))] border-t border-[hsl(var(--border-primary))] flex items-center justify-between px-4 shrink-0">
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1.5 text-[hsl(var(--text-muted))]">
+                <Info size={10} /> <span>12 Events</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[hsl(var(--text-muted))]">
+                <AlertCircle size={10} /> <span>0 Errors</span>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+            <button className="text-[10px] uppercase font-bold text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-secondary))]">
+              Clear Buffer
+            </button>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

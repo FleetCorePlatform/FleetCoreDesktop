@@ -1,14 +1,19 @@
 import { Canvas } from '@react-three/fiber';
-import { useGLTF, PresentationControls, Html, Environment, Stage } from '@react-three/drei';
+import {
+  useGLTF,
+  Html,
+  Environment,
+  Stage,
+} from '@react-three/drei';
 import { Suspense, useMemo, memo } from 'react';
 import { Box, Pause } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AutoRotateControls } from '@/screens/Drone/components/AutoRotateControls.tsx';
 
 const AVAILABLE_MODELS = ['x500', 'typhoon'];
 const DEFAULT_MODEL = 'x500';
 
-// Preload models (moved from top level to here if possible, or keep at module level if used across files, but fine here)
 AVAILABLE_MODELS.forEach((model) => useGLTF.preload(`/models/${model}.model.glb`));
 
 const DroneModel = memo(({ model }: { model: string }) => {
@@ -43,9 +48,8 @@ const VisualizerCanvas = memo(({ modelName }: { modelName: string }) => {
         <Suspense fallback={<Loader />}>
           <Environment preset="city" />
           <Stage environment={null} intensity={0.5}>
-            <PresentationControls global zoom={0.8} polar={[-0.2, Math.PI / 2]}>
-              <DroneModel model={modelName} />
-            </PresentationControls>
+            <AutoRotateControls />
+            <DroneModel model={modelName} />
           </Stage>
         </Suspense>
       </Canvas>

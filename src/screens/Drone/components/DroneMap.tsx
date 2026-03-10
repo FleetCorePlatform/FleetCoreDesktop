@@ -16,7 +16,7 @@ export function DroneMap({ drone, position, theme }: DroneMapProps) {
       <CardHeader className="py-3 px-4 border-b border-[hsl(var(--border-primary))]">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <MapPin size={16} className="text-[hsl(var(--text-secondary))]" />
-          Current Location
+          Home Position
         </CardTitle>
       </CardHeader>
       <div className="flex-1 relative z-0">
