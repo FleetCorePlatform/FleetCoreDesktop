@@ -5,10 +5,14 @@ import { Label } from '@/components/ui/label.tsx';
 import { Slider } from '@/components/ui/slider.tsx';
 import { NavigateFunction } from 'react-router-dom';
 import { OutpostSummary } from '@/screens/common/types.ts';
+import { MissionType } from '@/screens/Mission/types.ts';
+import { MissionTypeSelector } from '@/screens/Mission/components/MissionTypeSelector.tsx';
 
 interface MissionSidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  missionType: MissionType;
+  onMissionTypeChanged: (value: MissionType) => void;
   outpost: OutpostSummary;
   missionAltitude: number[];
   setMissionAltitude: (val: number[]) => void;
@@ -22,6 +26,8 @@ interface MissionSidebarProps {
 export function MissionSidebar({
   sidebarOpen,
   setSidebarOpen,
+  missionType,
+  onMissionTypeChanged,
   outpost,
   missionAltitude,
   setMissionAltitude,
@@ -75,6 +81,10 @@ export function MissionSidebar({
               disabled
               className="h-9 text-sm bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-muted))]"
             />
+          </div>
+
+          <div className="space-y-2">
+            <MissionTypeSelector value={missionType} onSelectionChanged={onMissionTypeChanged} />
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-1">

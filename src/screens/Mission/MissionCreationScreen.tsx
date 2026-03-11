@@ -9,8 +9,9 @@ import { useTheme } from '@/ThemeProvider.tsx';
 import { MissionSidebar } from './components/MissionSidebar';
 import { MissionMap } from './components/MissionMap';
 import { apiCallFull } from '@/utils/api.ts';
-import { CreateMissionRequest } from '@/screens/Mission/types.ts';
+import { CreateMissionRequest, MissionType } from '@/screens/Mission/types.ts';
 import { GroupSummary, OutpostSummary } from '@/screens/common/types.ts';
+import { SoloMissionMap } from '@/screens/Mission/components/SoloMissionMap.tsx';
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -27,6 +28,8 @@ export default function MissionCreationScreen() {
   const groupData: GroupSummary = location.state?.groupData;
   const outpost: OutpostSummary = location.state?.outpostData;
 
+  const [missionType, setMissionType] = useState<MissionType>('FULL');
+  const [soloWaypoints, setSoloWaypoints] = useState<Array<{ x: number; y: number }>>([]);
   const [jobName, setJobName] = useState('');
   const [missionAltitude, setMissionAltitude] = useState([50]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +60,10 @@ export default function MissionCreationScreen() {
       .catch((e) => console.error('Error while creating mission: ', e));
   };
 
+  const onMissionTypeChanged = (newValue: MissionType) => {
+    setMissionType(newValue);
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans overflow-hidden">
       <div className="flex flex-1 relative overflow-hidden">
@@ -71,6 +78,8 @@ export default function MissionCreationScreen() {
         <MissionSidebar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          missionType={missionType}
+          onMissionTypeChanged={onMissionTypeChanged}
           outpost={outpost}
           missionAltitude={missionAltitude}
           jobName={jobName}
@@ -81,13 +90,24 @@ export default function MissionCreationScreen() {
           navigate={navigate}
         />
 
-        <MissionMap
-          outpost={outpost}
-          theme={theme}
-          polygonPositions={polygonPositions}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
+        {missionType != 'SOLO' ?
+          <MissionMap
+            outpost={outpost}
+            theme={theme}
+            polygonPositions={polygonPositions}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />:
+          <SoloMissionMap
+            soloWaypoints={soloWaypoints}
+            setSoloWaypoints={setSoloWaypoints}
+            outpost={outpost}
+            theme={theme}
+            polygonPositions={polygonPositions}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />
+        }
       </div>
     </div>
   );
