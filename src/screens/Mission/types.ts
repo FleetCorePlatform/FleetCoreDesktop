@@ -1,3 +1,5 @@
+import { OutpostSummary } from '@/screens/common/types.ts';
+
 export interface MissionDetails {
   jobStatus: string;
   startedAt: string;
@@ -36,3 +38,13 @@ export interface DetectionValidationRequest {
 }
 
 export type FilterStatus = 'ALL' | 'PENDING' | 'CONFIRMED' | 'FALSE_POSITIVE';
+export type MissionType = 'FULL' | 'SUBSET' | 'SOLO';
+export type PointCoords = { x: number; y: number };
+
+export interface BaseMapProps {
+  outpost: OutpostSummary;
+  theme: string;
+  polygonPositions: L.LatLngExpression[];
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}

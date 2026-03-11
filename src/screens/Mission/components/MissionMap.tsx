@@ -4,9 +4,9 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { PanelLeft } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { OutpostSummary } from '@/screens/common/types.ts';
+import { BaseMapProps } from '@/screens/Mission/types.ts';
 
-function MapController({ points }: { points: L.LatLngExpression[] }) {
+export function MapController({ points }: { points: L.LatLngExpression[] }) {
   const map = useMap();
   useEffect(() => {
     if (points && points.length > 0) {
@@ -17,21 +17,13 @@ function MapController({ points }: { points: L.LatLngExpression[] }) {
   return null;
 }
 
-interface MissionMapProps {
-  outpost: OutpostSummary;
-  theme: string;
-  polygonPositions: L.LatLngExpression[];
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-}
-
 export function MissionMap({
   outpost,
   theme,
   polygonPositions,
   sidebarOpen,
   setSidebarOpen,
-}: MissionMapProps) {
+}: BaseMapProps) {
   return (
     <main className="flex-1 relative bg-[hsl(var(--bg-primary))]">
       <MapContainer
@@ -54,7 +46,6 @@ export function MissionMap({
         )}
 
         <MapController points={polygonPositions} />
-
         <Polygon
           positions={polygonPositions}
           pathOptions={{
@@ -67,7 +58,6 @@ export function MissionMap({
         />
       </MapContainer>
 
-      {/* Mobile Menu Toggle */}
       <Button
         variant="secondary"
         size="icon"
@@ -79,7 +69,6 @@ export function MissionMap({
         <PanelLeft size={20} />
       </Button>
 
-      {/* Desktop HUD Overlay */}
       <div className="hidden lg:block absolute top-6 right-6 z-[400] flex flex-col items-end gap-2 pointer-events-none">
         <div className="bg-[hsl(var(--bg-tertiary))]/95 backdrop-blur text-[hsl(var(--text-primary))] px-4 py-2 rounded-md border border-[hsl(var(--accent))]/30 shadow-xl">
           <span className="text-[10px] uppercase tracking-widest text-[hsl(var(--accent))] block mb-0.5">
