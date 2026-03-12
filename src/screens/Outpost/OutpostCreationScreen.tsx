@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { Button } from '@/components/ui/button.tsx';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import {useState, useEffect, useRef, useMemo, useCallback} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/ThemeProvider.tsx';
 import { apiCall } from '@/utils/api.ts';
@@ -204,7 +204,7 @@ function OutpostCreationScreen() {
     setIsClosed(true);
   };
 
-  const handleCreated = (e: any) => {
+  const handleCreated = useCallback((e: any) => {
     const { layerType, layer } = e;
     if (layerType === 'polygon') {
       updateGeometry(layer);
@@ -212,9 +212,9 @@ function OutpostCreationScreen() {
       const { lat, lng } = layer.getLatLng();
       setCoords({ lat, lng });
     }
-  };
+  }, []);
 
-  const handleEdited = (e: any) => {
+  const handleEdited = useCallback((e: any) => {
     const layers = e.layers;
     layers.eachLayer((layer: any) => {
       if (layer.getLatLngs) {
@@ -224,21 +224,21 @@ function OutpostCreationScreen() {
         setCoords({ lat, lng });
       }
     });
-  };
+  }, []);
 
-  const handleDeleted = () => {
+  const handleDeleted = useCallback(() => {
     setMetrics({ area: 0, perimeter: 0 });
     setPolygonPoints([]);
     setIsClosed(false);
-  };
+  }, []);
 
-  const handleDrawStart = (e: any) => {
-    if (e.layerType === 'polygon') {
-      setIsClosed(false);
-      setIsEditing(true)
-      // setPolygonPoints([]);
-    }
-  };
+  const handleDrawStart = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+
+  const handleDrawStop = useCallback(() => {
+    setIsEditing(false);
+  }, []);
 
   const drawConfig = useMemo(
     () => ({
@@ -292,14 +292,14 @@ function OutpostCreationScreen() {
 
         <main className="flex-1 relative bg-[hsl(var(--bg-primary))]">
           <CreationMap
-            theme={theme}
-            mapTarget={mapTarget}
-            drawConfig={drawConfig}
-            handleCreated={handleCreated}
-            handleDeleted={handleDeleted}
-            handleEdited={handleEdited}
-            handleDrawStart={handleDrawStart}
-            handleDrawStop={() => setIsEditing(false)}
+              theme={theme}
+              mapTarget={mapTarget}
+              drawConfig={drawConfig}
+              handleCreated={handleCreated}
+              handleDeleted={handleDeleted}
+              handleEdited={handleEdited}
+              handleDrawStart={handleDrawStart}
+              handleDrawStop={handleDrawStop}
           />
 
           <Button

@@ -6,7 +6,7 @@ import { OutpostStats } from './components/OutpostStats';
 import { GroupList } from './components/GroupList';
 import { CreateGroupDialog } from './components/CreateGroupDialog';
 import { GroupSummary, OutpostSummary } from '@/screens/common/types.ts';
-import { CreateGroupBody, GROUP_NAME_REGEX } from '@/screens/Outpost/types.ts';
+import { CreateGroupBody } from '@/screens/Outpost/types.ts';
 
 export default function OutpostOverviewScreen() {
   const { outpostUuid } = useParams<{ outpostUuid: string }>();
@@ -49,10 +49,6 @@ export default function OutpostOverviewScreen() {
   const handleCreateGroup = async () => {
     if (!newGroupName) {
       setGroupNameError('Group name is required.');
-      return;
-    }
-    if (!GROUP_NAME_REGEX.test(newGroupName)) {
-      setGroupNameError("Invalid format. Use alphanumeric, '-', '_', or ':'. Max 128 chars.");
       return;
     }
 

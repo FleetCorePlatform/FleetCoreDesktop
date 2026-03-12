@@ -99,6 +99,7 @@ export function OutpostMap({
                   <Button
                     variant="outline"
                     size="icon"
+                    disabled={outposts.length == 1}
                     onClick={prevOutpost}
                     className="h-8 w-8 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-secondary))]"
                   >
@@ -115,6 +116,7 @@ export function OutpostMap({
                   <Button
                     variant="outline"
                     size="icon"
+                    disabled={outposts.length == 1}
                     onClick={nextOutpost}
                     className="h-8 w-8 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-secondary))]"
                   >

@@ -20,7 +20,7 @@ export function CreationStatus({ shown, isClosed }: CreationStatusProps) {
             <span className="text-xs text-[hsl(var(--text-secondary))] truncate">
               {isClosed
                 ? 'Zone Defined. Ready to create.'
-                : 'Drawing Mode Active. Click to add points.'}
+                : 'Edit Mode Active. Click to add points.'}
             </span>
             {!isClosed && (
               <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-[hsl(var(--border-secondary))] bg-[#282e39] px-1.5 font-mono text-[10px] font-medium text-[hsl(var(--text-secondary))] shrink-0">

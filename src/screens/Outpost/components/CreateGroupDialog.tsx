@@ -69,19 +69,15 @@ export function CreateGroupDialog({
                 setNewGroupName(e.target.value);
                 if (groupNameError) setGroupNameError(null);
               }}
-              placeholder="e.g. alpha-squad-01"
+              placeholder="e.g. Fleet Omega"
               className={`bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] ${groupNameError ? 'border-red-500' : ''}`}
             />
-            {groupNameError ? (
+            {groupNameError &&
               <div className="flex items-center gap-1 text-xs text-red-400 mt-1">
                 <AlertCircle size={12} />
                 <span>{groupNameError}</span>
               </div>
-            ) : (
-              <p className="text-[10px] text-[hsl(var(--text-muted))]">
-                Allowed: Alphanumeric, ':', '_', '-'. Max 128 chars.
-              </p>
-            )}
+            }
           </div>
         </div>
 

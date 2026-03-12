@@ -23,4 +23,7 @@ export interface CreateGroupBody {
   group_name: string;
 }
 
-export const GROUP_NAME_REGEX = /^[a-zA-Z0-9:_-]{1,128}$/;
+export interface UpdateOutpostRequest {
+  name?: string;
+  area?: string;
+}

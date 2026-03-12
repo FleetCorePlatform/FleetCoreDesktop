@@ -1,4 +1,4 @@
-import { MoreVertical, Trash2, Edit2, ExternalLink, Clock } from 'lucide-react';
+import {MoreVertical, Trash2, Edit2, ExternalLink, Clock, Hexagon} from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Card,
@@ -21,6 +21,11 @@ import { useTheme } from '@/ThemeProvider.tsx';
 import { apiCallFull } from '@/utils/api.ts';
 import { OutpostDecommissionDialog } from './OutpostDecommissionDialog';
 import { Outpost } from '@/screens/common/types.ts';
+import {Dialog, DialogTitle} from "@radix-ui/react-dialog";
+import {DialogContent, DialogDescription, DialogFooter, DialogHeader} from "@/components/ui/dialog.tsx";
+import {Label} from "@/components/ui/label.tsx";
+import {Input} from "@/components/ui/input.tsx";
+import {UpdateOutpostRequest} from "@/screens/Outpost/types.ts";
 
 function MapBoundsController({ points }: { points: { x: number; y: number }[] }) {
   const map = useMap();
@@ -111,6 +116,38 @@ export function OutpostCard({ outpost }: { outpost: Outpost }) {
   const [decommissionError, setDecommissionError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [renameInput, setRenameInput] = useState('');
+  const [renameError, setRenameError] = useState<string | null>(null);
+
+  const handleRenameClick = () => {
+    setRenameInput(outpost.name);
+    setRenameError(null);
+    setIsRenameOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (!renameInput.trim()) {
+      setRenameError('Name cannot be empty.');
+      return;
+    }
+
+    const payload: UpdateOutpostRequest = {
+      name: renameInput
+    }
+
+    await apiCallFull(`/api/v1/outposts/${outpost.uuid}`, undefined, 'PATCH', payload)
+        .then((res) => {
+          if (res.status === 204) {
+            setIsRenameOpen(false);
+            navigate(0);
+          } else {
+            setRenameError('Failed to rename outpost.');
+          }
+        })
+        .catch(() => setRenameError('Failed to rename outpost.'));
+  };
+
   useEffect(() => {
     const storedVisit = localStorage.getItem(`last_visit_${outpost.uuid}`);
     if (storedVisit) {
@@ -199,8 +236,11 @@ export function OutpostCard({ outpost }: { outpost: Outpost }) {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="focus:bg-[#282e39] cursor-pointer">
                   <Link to={`/outposts/${outpost.uuid}/edit`} className="flex items-center w-full">
-                    <Edit2 size={14} className="mr-2" /> Edit Geofence
+                    <Hexagon size={14} className="mr-2" /> Edit Geofence
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRenameClick} className="focus:bg-[#282e39] cursor-pointer">
+                  <Edit2 size={14} className="mr-2" /> Change Name
                 </DropdownMenuItem>
                 <div className="h-px bg-[#282e39] my-1" />
                 <DropdownMenuItem
@@ -257,6 +297,39 @@ export function OutpostCard({ outpost }: { outpost: Outpost }) {
         error={decommissionError}
         onConfirm={confirmDecommission}
       />
+      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+        <DialogContent className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rename Outpost</DialogTitle>
+            <DialogDescription className="text-[hsl(var(--text-secondary))]">
+              Enter a new name for <span className="font-mono">{outpost.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label className="text-[hsl(var(--text-secondary))]">Outpost Name</Label>
+              <Input
+                  value={renameInput}
+                  onChange={(e) => { setRenameInput(e.target.value); setRenameError(null); }}
+                  className={`bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] ${renameError ? 'border-red-500' : ''}`}
+              />
+              {renameError && <p className="text-xs text-red-400">{renameError}</p>}
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+                variant="outline"
+                onClick={() => setIsRenameOpen(false)}
+                className="border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]"
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmRename} className="bg-white text-black hover:bg-gray-200">
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

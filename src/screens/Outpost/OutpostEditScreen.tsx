@@ -14,6 +14,7 @@ import { useTheme } from '@/ThemeProvider.tsx';
 import { EditMap } from './components/EditMap';
 import { EditSidebar } from './components/EditSidebar';
 import { Outpost, OutpostSummary } from '@/screens/common/types.ts';
+import {UpdateOutpostRequest} from "@/screens/Outpost/types.ts";
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -120,11 +121,11 @@ export default function OutpostEditScreen() {
 
       const wktString = `POLYGON ((${finalCoords.map((c) => `${c.lng} ${c.lat}`).join(', ')}))`;
 
-      const payload = {
+      const payload: UpdateOutpostRequest = {
         area: wktString,
       };
 
-      await apiCall(`/api/v1/outposts/${outpostUuid}`, undefined, 'PUT', payload);
+      await apiCall(`/api/v1/outposts/${outpostUuid}`, undefined, 'PATCH', payload);
       navigate('/outposts');
     } catch (e) {
       console.error('Save failed', e);

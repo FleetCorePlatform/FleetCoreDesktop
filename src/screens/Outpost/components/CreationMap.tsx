@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer, FeatureGroup, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
-import { useEffect } from 'react';
+import {memo, useEffect} from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
@@ -25,8 +25,7 @@ function MapController({ target }: { target: { lat: number; lng: number } | null
   return null;
 }
 
-export function CreationMap({
-  theme,
+export const CreationMap = memo(function CreationMap({  theme,
   mapTarget,
   drawConfig,
   handleCreated,
@@ -68,4 +67,4 @@ export function CreationMap({
       <MapController target={mapTarget} />
     </MapContainer>
   );
-}
+});
