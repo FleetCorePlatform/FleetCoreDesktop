@@ -1,4 +1,4 @@
-import { decode, encode } from 'cbor-js';
+import {decode, encode} from 'cbor-js';
 import {
   CommandReqPacket,
   CommandReqPayload,
@@ -6,6 +6,7 @@ import {
   ControlStatus,
   DataChannelPacket,
   HandshakeReqPacket,
+  LiveTelemetryData,
   ManualControlActionState,
   ManualControlState,
   PacketType,
@@ -19,9 +20,15 @@ const SEND_INTERVAL = 50;
 let activeDataChannel: RTCDataChannel | null = null;
 let statusCallback: ((status: ControlStatus) => void) | null = null;
 
+let telemetryCallback: ((telemetry: LiveTelemetryData) => void) | null = null;
+
 export const setControlStatusListener = (cb: (status: ControlStatus) => void) => {
   statusCallback = cb;
   cb(currentStatus);
+};
+
+export const setTelemetryListener = (cb: ((telemetry: LiveTelemetryData) => void) | null) => {
+  telemetryCallback = cb;
 };
 
 const updateStatus = (newStatus: ControlStatus) => {
@@ -66,6 +73,10 @@ const processIncomingPacket = (packet: DataChannelPacket) => {
       console.warn(`[CONTROL] Handshake Denied/Stopped: ${packet.payload.reason}`);
       updateStatus(ControlStatus.IDLE);
       controlSequenceId = 0;
+    }
+  } else if (packet.type === PacketType.TELEMETRY) {
+    if (telemetryCallback) {
+      telemetryCallback(packet.payload)
     }
   } else if (packet.type === PacketType.CMD_ACK) {
     console.log(`Received packet with type ${packet.type}, and content: ${packet.payload}`);

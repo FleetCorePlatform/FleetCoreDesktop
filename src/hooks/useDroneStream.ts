@@ -17,7 +17,6 @@ export function useDroneStream(drone: DroneSummaryModel) {
   const streamStateRef = useRef<StreamState>('idle');
   const remoteEnabledRef = useRef(false);
   const teardownTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const prevStatsRef = useRef({ bytesReceived: 0, framesDecoded: 0, timestamp: 0 });
 
   const credentialsRef = useRef(credentials);
   const droneRef = useRef(drone);
@@ -51,7 +50,6 @@ export function useDroneStream(drone: DroneSummaryModel) {
       setStreamActive(false);
       streamStateRef.current = 'idle';
       remoteEnabledRef.current = false;
-      prevStatsRef.current = { bytesReceived: 0, framesDecoded: 0, timestamp: 0 };
     }, delay);
   });
 
@@ -100,5 +98,5 @@ export function useDroneStream(drone: DroneSummaryModel) {
     }, 50);
   }, []);
 
-  return { videoRef, viewerHandleRef, prevStatsRef, streamActive, streamError, retry };
+  return { videoRef, viewerHandleRef, streamActive, streamError, retry };
 }

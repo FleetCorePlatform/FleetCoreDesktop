@@ -25,6 +25,7 @@ export enum PacketType {
   CONTROL = "CONTROL",
   CMD_REQ = "CMD_REQ",
   CMD_ACK = "CMD_ACK",
+  TELEMETRY = "TELEMETRY",
 }
 
 export enum ControlStatus {
@@ -90,7 +91,47 @@ export interface CommandAckPacket {
   payload: CommandAckPayload;
 }
 
-export type DataChannelPacket = HandshakeReqPacket | HandshakeAckPacket | ControlPacket | CommandAckPacket | CommandReqPacket;
+export interface TelemetryPacket {
+  type: PacketType.TELEMETRY;
+  payload: LiveTelemetryData;
+}
+
+export type DataChannelPacket = HandshakeReqPacket | HandshakeAckPacket | ControlPacket | CommandAckPacket | CommandReqPacket | TelemetryPacket;
 
 export type StreamState = 'idle' | 'pending' | 'active';
 export type ControlScreenSelectedView = 'control' | 'info';
+
+export interface Position {
+  latitude_deg: number;
+  longitude_deg: number;
+  relative_altitude_m: number;
+}
+
+export interface Battery {
+  temperature_degc: number;
+  voltage_v: number;
+  remaining_percent: number;
+}
+
+export interface Health {
+  is_gyrometer_calibration_ok: boolean;
+  is_accelerometer_calibration_ok: boolean;
+  is_magnetometer_calibration_ok: boolean;
+  is_local_position_ok: boolean;
+  is_global_position_ok: boolean;
+  is_home_position_ok: boolean;
+}
+
+export interface Velocity {
+  ground_speed_ms: number;
+  heading_deg: number;
+}
+
+export interface LiveTelemetryData {
+  uptime_s: number;
+  signal_strength_dbm: number;
+  position: Position;
+  battery: Battery;
+  health: Health;
+  velocity: Velocity;
+}

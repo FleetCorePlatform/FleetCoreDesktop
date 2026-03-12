@@ -5,6 +5,15 @@ export interface Mission {
   detectionCount: number;
 }
 
+export interface SoloMission {
+  name: string;
+  missionUuid: string;
+  startTime: string;
+  detectionCount: number;
+  droneUuid: string,
+  droneName: string
+}
+
 export interface Check {
   name: string;
   status: 'UP' | 'DOWN';
