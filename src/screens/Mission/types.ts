@@ -6,11 +6,22 @@ export interface MissionDetails {
   finishedAt?: string;
 }
 
-export interface CreateMissionRequest {
-  outpostUuid: string;
-  groupUuid: string;
-  altitude: number;
-  jobName: string;
+
+export interface CreateSoloMissionRequest {
+  jobName: string,
+  droneUuid: string,
+  waypoints: Array<{x: number, y: number}>,
+  altitude: number,
+  speed?: number,
+  returnToLaunch?: boolean,
+}
+
+export interface CreateGroupMissionRequest {
+  jobName: string,
+  outpostUuid: string,
+  groupUuid: string,
+  droneUuids?: Array<string>,
+  altitude: number,
 }
 
 export enum MissionBodyEnum {
@@ -40,6 +51,8 @@ export interface DetectionValidationRequest {
 export type FilterStatus = 'ALL' | 'PENDING' | 'CONFIRMED' | 'FALSE_POSITIVE';
 export type MissionType = 'FULL' | 'SUBSET' | 'SOLO';
 export type PointCoords = { x: number; y: number };
+
+export type ProgressState = 'calculating' | 'success' | 'error';
 
 export interface BaseMapProps {
   outpost: OutpostSummary;

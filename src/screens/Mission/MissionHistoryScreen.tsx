@@ -3,13 +3,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { HistoryHeader } from './components/HistoryHeader';
 import { HistoryTimeline } from './components/HistoryTimeline';
-import { Mission } from '@/screens/common/types.ts';
+import {Mission, SoloMission} from '@/screens/common/types.ts';
 
 export default function MissionHistoryScreen() {
   const { groupUuid } = useParams<{ groupUuid: string }>();
   const navigate = useNavigate();
 
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [soloMissions, setSoloMissions] = useState<SoloMission[]>([])
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +28,19 @@ export default function MissionHistoryScreen() {
           setMissions([]);
         })
         .finally(() => setIsLoading(false));
+
+      await apiCall<SoloMission[]>('/api/v1/missions/solo', { group_uuid: groupUuid || '' }, 'GET')
+          .then((res) => {
+            const sorted = res.sort(
+                (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+            );
+            setSoloMissions(sorted);
+          })
+          .catch((e) => {
+            console.log('Error while fetching missions: ', e);
+            setSoloMissions([]);
+          })
+          .finally(() => setIsLoading(false));
     };
 
     fetchMissions();
@@ -78,13 +92,14 @@ export default function MissionHistoryScreen() {
       <HistoryHeader
         navigate={navigate}
         groupUuid={groupUuid}
-        totalSorties={missions.length}
+        totalSorties={missions.length + soloMissions.length}
         totalThreats={totalThreats}
       />
 
       <HistoryTimeline
         isLoading={isLoading}
         missions={missions}
+        soloMissions={soloMissions}
         groupUuid={groupUuid || ''}
         formatDate={formatDate}
         formatTime={formatTime}

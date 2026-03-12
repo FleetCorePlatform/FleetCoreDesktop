@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import {useState, useMemo, useEffect} from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,10 +8,19 @@ import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useTheme } from '@/ThemeProvider.tsx';
 import { MissionSidebar } from './components/MissionSidebar';
 import { MissionMap } from './components/MissionMap';
-import { apiCallFull } from '@/utils/api.ts';
-import { CreateMissionRequest, MissionType } from '@/screens/Mission/types.ts';
+import {apiCall, apiCallFull} from '@/utils/api.ts';
+import {
+  CreateGroupMissionRequest,
+  CreateSoloMissionRequest,
+  MissionType,
+  ProgressState
+} from '@/screens/Mission/types.ts';
 import { GroupSummary, OutpostSummary } from '@/screens/common/types.ts';
 import { SoloMissionMap } from '@/screens/Mission/components/SoloMissionMap.tsx';
+import {DroneSummaryModel} from "@/screens/Group/types.ts";
+import {MissionOverlay} from "@/screens/Mission/components/MissionOverlay.tsx";
+import {MissionCreationProgressbar} from "@/screens/Mission/components/MissionCreationProgressbar.tsx";
+import {isPointInPolygon} from "@/screens/Mission/utils/common.ts";
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -28,44 +37,130 @@ export default function MissionCreationScreen() {
   const groupData: GroupSummary = location.state?.groupData;
   const outpost: OutpostSummary = location.state?.outpostData;
 
+  const [drones, setDrones] = useState<DroneSummaryModel[]>([]);
   const [missionType, setMissionType] = useState<MissionType>('FULL');
   const [soloWaypoints, setSoloWaypoints] = useState<Array<{ x: number; y: number }>>([]);
   const [jobName, setJobName] = useState('');
-  const [missionAltitude, setMissionAltitude] = useState([50]);
+
+  const [selectedDrones, setSelectedDrones] = useState<string[]>([]);
+
+  const [returnToLaunch, setReturnToLaunch] = useState(true);
+  const [missionAltitude, setMissionAltitude] = useState([25]);
+  const [cruiseSpeed, setCruiseSpeed] = useState([15]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>();
+  const [missionProgress, setMissionProgress] = useState<ProgressState | null>(null);
+
+  const isValidName = jobName.trim().length > 0 && jobName.length <= 64;
+
+  const hasWaypointOutsideGeofence = useMemo(() => {
+    if (!outpost?.area?.points || soloWaypoints.length === 0) return false;
+    return soloWaypoints.some((wp) => !isPointInPolygon(wp, outpost.area!.points));
+  }, [soloWaypoints, outpost]);
 
   const polygonPositions: L.LatLngExpression[] = useMemo(() => {
     if (!outpost?.area) return [];
     return outpost.area.points.map((p) => [p.y, p.x] as [number, number]);
   }, [outpost]);
 
-  const handleConfirmMission = async () => {
-    if (!outpost || !groupData) return;
-    setIsSubmitting(true);
+  const canSubmit = useMemo(() => {
+    if (drones.length == 0) return false;
+    if (!isValidName) return false;
+    if (missionType === 'SOLO' && soloWaypoints.length < 2) return false;
+    if (missionType === 'SOLO' && selectedDrones.length !== 1) return false;
+    if (missionType === 'SOLO' && hasWaypointOutsideGeofence) return false;
+    if (missionType === 'SUBSET' && selectedDrones.length === 0) return false;
+    return !isSubmitting;
 
-    const payload: CreateMissionRequest = {
-      outpostUuid: outpost.uuid,
-      groupUuid: groupData.groupUUID,
-      altitude: missionAltitude[0],
-      jobName: jobName,
-    };
+  }, [jobName, missionType, soloWaypoints, selectedDrones, isSubmitting]);
 
-    await apiCallFull('/api/v1/missions', undefined, 'POST', payload)
-      .then((res) => {
-        if (res.status === 200) {
-          navigate(`/missions/${groupData.groupUUID}`);
-        }
-      })
-      .catch((e) => console.error('Error while creating mission: ', e));
-  };
+  useEffect(() => {
+    setIsLoading(true);
+    apiCall<DroneSummaryModel[]>(`/api/v1/groups/${groupData.groupUUID}/drones`, undefined, 'GET')
+        .then((res) => {
+          if (res.length > 0) {
+            setDrones(res);
+          } else {
+            setError("You cannot start a mission in a group with no members");
+          }
+        })
+        .catch((e) => {
+          console.error('Error while fetching drones: ', e);
+          setError("Failed to load drones. Please try again.");
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+  }, [groupData, outpost]);
 
   const onMissionTypeChanged = (newValue: MissionType) => {
     setMissionType(newValue);
+    setSelectedDrones([])
   }
+
+  const handleConfirmMission = async () => {
+    if (!outpost || !groupData) return;
+    setIsSubmitting(true);
+    setMissionProgress('calculating');
+
+    const payload = (() => {
+      switch (missionType) {
+        case 'SOLO':
+          return {
+            jobName: jobName,
+            droneUuid: selectedDrones[0],
+            waypoints: soloWaypoints,
+            altitude: missionAltitude[0],
+            speed: cruiseSpeed[0],
+            returnToLaunch: returnToLaunch
+          } satisfies CreateSoloMissionRequest;
+        case 'FULL':
+          return {
+            jobName: jobName,
+            outpostUuid: outpost.uuid,
+            groupUuid: groupData.groupUUID,
+            altitude: missionAltitude[0]
+          } satisfies CreateGroupMissionRequest;
+        case 'SUBSET':
+          return {
+            jobName: jobName,
+            outpostUuid: outpost.uuid,
+            groupUuid: groupData.groupUUID,
+            droneUuids: selectedDrones,
+            altitude: missionAltitude[0]
+          } satisfies CreateGroupMissionRequest;
+        default:
+          throw new Error(`Unhandled mission type: ${missionType}`);
+      }
+    })();
+
+    await apiCallFull(`/api/v1/missions/${missionType === 'SOLO' ? 'solo' : 'group'}`, undefined, 'POST', payload)
+        .then((res) => {
+          if (res.status === 200) {
+            setMissionProgress('success');
+            setTimeout(() => setMissionProgress(null), 6000);
+            setTimeout(() => navigate(`/missions/${groupData.groupUUID}`), 1500);
+          } else {
+            setMissionProgress('error');
+            setTimeout(() => setMissionProgress(null), 9000);
+          }
+        })
+        .catch(() => {
+          setMissionProgress('error');
+          setTimeout(() => setMissionProgress(null), 9000);
+        })
+        .finally(() => {
+          setIsSubmitting(false)
+        });
+  };
 
   return (
     <div className="flex flex-col h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans overflow-hidden">
+      <MissionOverlay isLoading={isLoading} error={error} onDismiss={() => navigate(-1)} />
+      <MissionCreationProgressbar state={missionProgress} />
       <div className="flex flex-1 relative overflow-hidden">
         {/* Sidebar Overlay */}
         {sidebarOpen && (
@@ -76,17 +171,26 @@ export default function MissionCreationScreen() {
         )}
 
         <MissionSidebar
+          drones={drones}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           missionType={missionType}
           onMissionTypeChanged={onMissionTypeChanged}
           outpost={outpost}
-          missionAltitude={missionAltitude}
           jobName={jobName}
+          returnToLaunch={returnToLaunch}
+          setReturnToLaunch={setReturnToLaunch}
+          missionAltitude={missionAltitude}
           setMissionAltitude={setMissionAltitude}
+          cruiseSpeed={cruiseSpeed}
+          setCruiseSpeed={setCruiseSpeed}
           setJobName={setJobName}
+          selectedDrones={selectedDrones}
+          setSelectedDrones={setSelectedDrones}
           isSubmitting={isSubmitting}
+          canSubmit={canSubmit}
           handleConfirmMission={handleConfirmMission}
+          soloWaypoints={soloWaypoints}
           navigate={navigate}
         />
 
@@ -106,6 +210,7 @@ export default function MissionCreationScreen() {
             polygonPositions={polygonPositions}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
+            returnToLaunch={returnToLaunch}
           />
         }
       </div>
