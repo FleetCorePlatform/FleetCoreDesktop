@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { OnScreenJoystick } from './OnScreenJoystick';
 import { DroneSummaryModel } from '@/screens/Group/types.ts';
-import { ControlStatus } from '@/screens/Drone/types.ts';
+import {ControlStatus, LiveTelemetryData} from '@/screens/Drone/types.ts';
 
 interface DroneControlCameraProps {
   drone: DroneSummaryModel;
@@ -30,6 +30,7 @@ interface DroneControlCameraProps {
     jitter: number;
     fps: number;
   };
+  telemetry: LiveTelemetryData | null;
   onStartStream: () => void;
   onToggleControl: () => void;
 }
@@ -45,9 +46,18 @@ export function DroneControlCamera({
   streamError,
   controlStatus,
   stats,
+  telemetry,
   onStartStream,
   onToggleControl,
 }: DroneControlCameraProps) {
+  const formatUptime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    if (mins < 60) return `${mins}m ${seconds % 60}s`;
+    const hours = Math.floor(mins / 60);
+    return `${hours}h ${mins % 60}m`;
+  };
+
   return (
     <div className="relative w-full h-full bg-[hsl(var(--bg-secondary))] overflow-hidden flex flex-col">
       {/* HUD Header */}
@@ -190,7 +200,7 @@ export function DroneControlCamera({
           </div>
         )}
 
-        <div className="absolute inset-0 pointer-events-none border border-[hsl(var(--border-primary))]/20 m-4">
+        <div className="z-1500 absolute inset-0 pointer-events-none border border-[hsl(var(--border-primary))]/20 m-4">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center opacity-40">
             <div className="absolute w-full h-px bg-emerald-500" />
             <div className="absolute h-full w-px bg-emerald-500" />
@@ -250,15 +260,15 @@ export function DroneControlCamera({
       {/* Footer */}
       <div className="h-6 bg-[hsl(var(--bg-secondary))]/90 border-t border-[hsl(var(--border-primary))] flex items-center justify-between px-3 lg:px-6 z-20 shrink-0">
         <div className="flex items-center gap-2 lg:gap-4 text-[9px] font-mono text-[hsl(var(--text-muted))] uppercase tracking-widest">
-          <span>Up: {streamActive ? '01:24:02' : 'N/A'}</span>
+          <span>Up: {streamActive && telemetry ? formatUptime(telemetry.uptime_s) : 'N/A'}</span>
           <span className="hidden sm:inline">
             Home: {drone.home_position.x.toFixed(3)} • {drone.home_position.y.toFixed(3)}
           </span>
         </div>
         <div className="flex items-center gap-2 lg:gap-4 text-[9px] font-mono text-emerald-500 font-bold uppercase tracking-widest">
-          <span>Bat: {streamActive ? '84%' : 'N/A'}</span>
-          <span className="hidden sm:inline">GPS: {streamActive ? '3D-FIX (12 SAT)' : 'N/A'}</span>
-          <span className="sm:hidden">{streamActive ? '3D-FIX' : 'N/A'}</span>
+          <span>Bat: {streamActive && telemetry ? `${telemetry.battery.remaining_percent}%` : 'N/A'}</span>
+          <span className="hidden sm:inline">GPS: {streamActive && telemetry ? telemetry.health.is_global_position_ok ? '3D-FIX' : 'No GPS Lock' : 'N/A'}</span>
+          <span className="sm:hidden">{streamActive && telemetry ? telemetry.health.is_global_position_ok ? '3D-FIX' : 'No GPS Lock' : 'N/A'}</span>
         </div>
       </div>
     </div>

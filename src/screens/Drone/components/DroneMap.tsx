@@ -1,16 +1,17 @@
 import { MapPin } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import {MapContainer, TileLayer, Marker, Popup, Polyline} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Drone } from '../types';
 
 interface DroneMapProps {
   drone: Drone;
-  position: [number, number];
+  homePosition: [number, number];
+  livePosition?: [number, number];
   theme: string;
 }
 
-export function DroneMap({ drone, position, theme }: DroneMapProps) {
+export function DroneMap({ drone, homePosition, livePosition, theme }: DroneMapProps) {
   return (
     <Card className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))] flex flex-col h-[380px]">
       <CardHeader className="py-3 px-4 border-b border-[hsl(var(--border-primary))]">
@@ -21,7 +22,7 @@ export function DroneMap({ drone, position, theme }: DroneMapProps) {
       </CardHeader>
       <div className="flex-1 relative z-0">
         <MapContainer
-          center={position}
+          center={homePosition}
           zoom={15}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
@@ -38,7 +39,22 @@ export function DroneMap({ drone, position, theme }: DroneMapProps) {
               attribution="&copy; OpenStreetMap contributors &copy; CARTO"
             />
           )}
-          <Marker position={position}>
+          {livePosition && (
+              <>
+                <Marker position={livePosition} />
+                <Polyline
+                    positions={[homePosition, livePosition]}
+                    pathOptions={{
+                      color: '#6b7280',
+                      weight: 1.5,
+                      dashArray: '6, 6',
+                      opacity: 0.6,
+                    }}
+                />
+              </>
+          )}
+
+          <Marker position={homePosition}>
             <Popup className="text-xs">{drone.address}</Popup>
           </Marker>
         </MapContainer>
@@ -48,16 +64,16 @@ export function DroneMap({ drone, position, theme }: DroneMapProps) {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase">
-                Network Address
+                Public Address
               </p>
               <p className="text-xs font-mono text-[hsl(var(--text-primary))] mt-0.5">
                 {drone.address}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase">Coordinates</p>
+              <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase">Home Coordinates</p>
               <p className="text-[10px] font-mono text-[hsl(var(--text-muted))] mt-0.5">
-                {position[0].toFixed(5)}, {position[1].toFixed(5)}
+                {homePosition[0].toFixed(5)}, {homePosition[1].toFixed(5)}
               </p>
             </div>
           </div>

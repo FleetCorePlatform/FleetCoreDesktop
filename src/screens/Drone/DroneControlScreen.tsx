@@ -21,19 +21,23 @@ import {
   requestManualControl,
   setControlStatusListener,
 } from '@/utils/droneManualControl.ts';
+import {useWebRtcStats} from "@/hooks/useWebRtcStats.ts";
+import {useTelemetry} from "@/hooks/useTelemetry.ts";
 
 export default function DroneControlScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const drone: DroneSummaryModel = location.state?.drone;
 
-  const { videoRef, viewerHandleRef, prevStatsRef, streamActive, streamError, retry } =
+  const { videoRef, viewerHandleRef, streamActive, streamError, retry } =
     useDroneStream(drone);
+
+  const stats = useWebRtcStats(streamActive, viewerHandleRef);
+  const { telemetry, history } = useTelemetry();
 
   const [view, setView] = useState<ControlScreenSelectedView>('control');
   const manualControlRef = useRef<ManualControlState>({ pitch: 0, roll: 0, throttle: 0.5, yaw: 0 });
   const [controlStatus, setControlStatus] = useState<ControlStatus>(ControlStatus.IDLE);
-  const [stats, setStats] = useState({ latency: 0, bitrate: 0, packetLoss: 0, jitter: 0, fps: 0 });
 
   useEffect(() => {
     setControlStatusListener((status) => setControlStatus(status));
@@ -41,51 +45,6 @@ export default function DroneControlScreen() {
       setControlStatusListener(() => {});
     };
   }, []);
-
-  useEffect(() => {
-    if (!streamActive || !viewerHandleRef.current) {
-      setStats({ latency: 0, bitrate: 0, packetLoss: 0, jitter: 0, fps: 0 });
-      return;
-    }
-
-    const interval = setInterval(async () => {
-      const pc = viewerHandleRef.current?.peerConnection;
-      if (!pc) return;
-      try {
-        const statsReport = await pc.getStats();
-        let latency = 0,
-          bitrate = 0,
-          packetLoss = 0,
-          jitter = 0,
-          fps = 0;
-
-        statsReport.forEach((report) => {
-          if (report.type === 'inbound-rtp' && report.kind === 'video') {
-            const { timestamp: now, bytesReceived: bytes, framesDecoded: frames = 0 } = report;
-            if (prevStatsRef.current.timestamp > 0) {
-              const dt = (now - prevStatsRef.current.timestamp) / 1000;
-              if (dt > 0) {
-                bitrate = ((bytes - prevStatsRef.current.bytesReceived) * 8) / dt / 1_000_000;
-                fps = (frames - prevStatsRef.current.framesDecoded) / dt;
-              }
-            }
-            prevStatsRef.current = { bytesReceived: bytes, framesDecoded: frames, timestamp: now };
-            packetLoss = report.packetsLost || 0;
-            jitter = (report.jitter || 0) * 1000;
-          }
-          if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-            latency = (report.currentRoundTripTime || 0) * 1000;
-          }
-        });
-
-        setStats({ latency, bitrate, packetLoss, jitter, fps });
-      } catch (e) {
-        console.error('Error fetching WebRTC stats:', e);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [streamActive]);
 
   const handleToggleControl = () => {
     if (controlStatus === ControlStatus.ACTIVE) releaseManualControl();
@@ -134,6 +93,19 @@ export default function DroneControlScreen() {
     if (gamepad.buttons[1] && !lastButtonsRef.current[1]) handleLand();
     lastButtonsRef.current = [...gamepad.buttons];
   }, [gamepad]);
+
+  const subsystems = telemetry ? [
+    { label: 'Gyro', ok: telemetry.health.is_gyrometer_calibration_ok },
+    { label: 'Accelerometer', ok: telemetry.health.is_accelerometer_calibration_ok },
+    { label: 'Magnetometer', ok: telemetry.health.is_magnetometer_calibration_ok },
+    { label: 'Local Position', ok: telemetry.health.is_local_position_ok },
+    { label: 'Global Position', ok: telemetry.health.is_global_position_ok },
+    { label: 'Home Position', ok: telemetry.health.is_home_position_ok },
+  ].map((sys) => ({
+    ...sys,
+    color: sys.ok ? 'text-emerald-500' : 'text-red-500',
+    stats: sys.ok ? 'Healthy' : "Unhealthy"
+  })) : [];
 
   if (!drone) {
     return (
@@ -207,7 +179,11 @@ export default function DroneControlScreen() {
       {/* Main content */}
       <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         {view === 'info' ? (
-          <DroneInfoPanel droneUuid={drone.uuid} />
+          <DroneInfoPanel
+              droneUuid={drone.uuid}
+              telemetry={telemetry}
+              telemetryHistory={history}
+          />
         ) : (
           <div className="flex flex-col gap-2 lg:gap-4 lg:h-full">
             <div className="h-[280px] sm:h-[360px] lg:h-auto lg:flex-[3] lg:min-h-0 bg-[hsl(var(--bg-secondary))] rounded-xl border border-[hsl(var(--border-primary))] overflow-hidden shadow-2xl relative shrink-0">
@@ -222,6 +198,7 @@ export default function DroneControlScreen() {
                 streamError={streamError}
                 controlStatus={controlStatus}
                 stats={stats}
+                telemetry={telemetry}
                 onStartStream={retry}
                 onToggleControl={handleToggleControl}
               />
@@ -235,31 +212,42 @@ export default function DroneControlScreen() {
               <div className="w-full lg:w-72 bg-[hsl(var(--bg-secondary))]/50 border border-[hsl(var(--border-primary))] rounded-xl p-4 flex flex-col gap-4 lg:shrink-0 lg:overflow-y-auto lg:min-h-0">
                 <h3 className="text-[10px] font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest border-b border-[hsl(var(--border-primary))] pb-2 flex items-center justify-between">
                   <span>Subsystems</span>
-                  <span className="text-emerald-500 text-[8px]">All Nominal</span>
+                  <span className={`text-[8px] ${
+                      !streamActive
+                          ? 'text-red-500'
+                          : subsystems.every((s) => s.ok)
+                              ? 'text-emerald-500'
+                              : 'text-amber-500'
+                  }`}>
+                    {!streamActive
+                        ? 'Unavailable'
+                        : subsystems.every((s) => s.ok)
+                            ? 'All Nominal'
+                            : 'Degraded'}
+                  </span>
                 </h3>
 
                 <div className="space-y-4">
-                  {[
-                    { label: 'Position Hold', status: 'Active', color: 'text-emerald-500' },
-                    { label: 'Avoidance', status: 'Standby', color: 'text-amber-500' },
-                    { label: 'Telemetry', status: 'Encryption OK', color: 'text-emerald-500' },
-                    { label: 'Signal Strength', status: '-42 dBm', color: 'text-emerald-500' },
-                  ].map((sys, i) => (
-                    <div
-                      key={sys.label}
-                      className="flex flex-col gap-1 animate-[fadeIn_0.5s_ease-out_forwards]"
-                      style={{ animationDelay: `${i * 100}ms`, opacity: 0 }}
-                    >
-                      <span className="text-[10px] text-[hsl(var(--text-muted))] uppercase">
-                        {sys.label}
-                      </span>
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[11px] font-bold ${sys.color}`}>{sys.status}</span>
-                        <div
-                          className={`w-1.5 h-1.5 rounded-full ${sys.color.replace('text-', 'bg-')} animate-pulse`}
-                        />
+                  {!streamActive ? (
+                      <div className="flex flex-col items-center justify-center py-4 gap-2">
+                        <span className="text-[11px] text-[hsl(var(--text-muted))]">Subsystems unavailable</span>
                       </div>
-                    </div>
+                  ) : subsystems.map((sys, i) => (
+                      <div
+                          key={sys.label}
+                          className="flex flex-col gap-1 animate-[fadeIn_0.5s_ease-out_forwards]"
+                          style={{ animationDelay: `${i * 100}ms`, opacity: 0 }}
+                      >
+                        <span className="text-[10px] text-[hsl(var(--text-muted))] uppercase">
+                          {sys.label}
+                        </span>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[11px] font-bold ${sys.color}`}>{sys.ok}</span>
+                          <div
+                              className={`w-1.5 h-1.5 rounded-full ${sys.color.replace('text-', 'bg-')} animate-pulse`}
+                          />
+                        </div>
+                      </div>
                   ))}
                 </div>
 

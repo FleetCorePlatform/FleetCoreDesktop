@@ -1,15 +1,14 @@
 import { Canvas } from '@react-three/fiber';
 import {
-  useGLTF,
-  Html,
-  Environment,
-  Stage,
+    useGLTF,
+    Html,
+    Environment,
+    Stage, OrbitControls,
 } from '@react-three/drei';
 import { Suspense, useMemo, memo } from 'react';
 import { Box, Pause } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AutoRotateControls } from '@/screens/Drone/components/AutoRotateControls.tsx';
 
 const AVAILABLE_MODELS = ['x500', 'typhoon'];
 const DEFAULT_MODEL = 'x500';
@@ -48,7 +47,12 @@ const VisualizerCanvas = memo(({ modelName }: { modelName: string }) => {
         <Suspense fallback={<Loader />}>
           <Environment preset="city" />
           <Stage environment={null} intensity={0.5}>
-            <AutoRotateControls />
+            <OrbitControls
+              autoRotate={true}
+              autoRotateSpeed={2}
+              enableZoom={false}
+              enablePan={false}
+            />
             <DroneModel model={modelName} />
           </Stage>
         </Suspense>
