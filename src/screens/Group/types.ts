@@ -5,7 +5,7 @@ export interface DroneSummaryModel {
   address: string;
   manager_version: string;
   first_discovered: string;
-  home_position: { x: number; y: number; z: number };
+  home_position: DroneHomePositionModel;
   maintenance: boolean;
   remaining_percent: number | null;
   inFlight: boolean;
@@ -46,11 +46,17 @@ export interface IoTCertContainer {
   certificateARN: string;
 }
 
-export interface PatchDroneRequestModel {
-  groupName: string | undefined;
+export interface DroneHomePositionModel {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface UpdateDroneModel {
   droneName: string | undefined;
   address: string | undefined;
   agentVersion: string | undefined;
+  homePosition: DroneHomePositionModel | undefined;
 }
 
 export const AVAILABLE_CAPABILITIES = [
@@ -82,4 +88,4 @@ export const MAINTENANCE_TYPES = [
 export const PUBLIC_IP_REGEX =
   /^(?!10\.)(?!172\.(1[6-9]|2[0-9]|3[0-1])\.)(?!192\.168\.)(?!127\.)(?!169\.254\.)(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 
-export type EditDroneField = 'address' | 'name' | 'version' | 'group';
+export type EditDroneField = 'address' | 'name' | 'version' | 'homePosition';

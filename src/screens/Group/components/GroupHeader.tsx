@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import {ArrowLeft, Edit2, Plus, Trash2} from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,7 @@ interface GroupHeaderProps {
   groupUuid?: string;
   outpostUuid?: string;
   onDeleteClick: () => void;
+  onRenameClick: () => void;
   onRegisterClick: () => void;
 }
 
@@ -16,6 +17,7 @@ export function GroupHeader({
   groupUuid,
   outpostUuid,
   onDeleteClick,
+  onRenameClick,
   onRegisterClick,
 }: GroupHeaderProps) {
   return (
@@ -51,6 +53,14 @@ export function GroupHeader({
         >
           <Trash2 size={16} className="mr-2" />
           Delete Group
+        </Button>
+
+        <Button
+            onClick={onRenameClick}
+            className="flex-1 md:flex-none bg-[hsl(var(--bg-tertiary))]! border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]/50 hover:text-[hsl(var(--text-primary))]/50 h-9"
+        >
+          <Edit2 size={16} className="mr-2" />
+          Rename Group
         </Button>
 
         <Button

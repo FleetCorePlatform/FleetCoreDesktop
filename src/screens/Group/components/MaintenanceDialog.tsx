@@ -58,14 +58,14 @@ export function MaintenanceDialog({
           {/* Drone Info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(var(--text-muted))]">Target Drone</Label>
-              <div className="text-sm font-medium border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))]/50 px-3 py-2 rounded-md">
+              <Label className="text-xs text-[hsl(var(--text-primary))]">Target Drone</Label>
+              <div className="text-[hsl(var(--text-muted))] text-sm font-medium border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))]/50 px-3 py-2 rounded-md">
                 {drone?.name}
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(var(--text-muted))]">UUID</Label>
-              <div className="text-sm font-mono border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))]/50 px-3 py-2 rounded-md truncate">
+              <Label className="text-xs text-[hsl(var(--text-primary))]">UUID</Label>
+              <div className="text-[hsl(var(--text-muted))] text-sm font-mono border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))]/50 px-3 py-2 rounded-md truncate">
                 {drone?.uuid}
               </div>
             </div>
@@ -73,15 +73,15 @@ export function MaintenanceDialog({
 
           {/* Maintenance Type */}
           <div className="space-y-2">
-            <Label htmlFor="maint-type">Maintenance Type</Label>
+            <Label htmlFor="maint-type" className={"text-[hsl(var(--text-primary))]"}>Maintenance Type</Label>
             <Select value={form.type} onValueChange={(val) => setForm({ ...form, type: val })}>
               <SelectTrigger
                 id="maint-type"
-                className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))]"
+                className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))]"
               >
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
-              <SelectContent className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))]">
+              <SelectContent className="bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))]">
                 {MAINTENANCE_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
@@ -93,7 +93,7 @@ export function MaintenanceDialog({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="maint-desc">Description & Notes</Label>
+            <Label htmlFor="maint-desc" className={"text-[hsl(var(--text-primary))]"}>Description & Notes</Label>
             <textarea
               id="maint-desc"
               className="flex min-h-[100px] w-full rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-tertiary))] px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"

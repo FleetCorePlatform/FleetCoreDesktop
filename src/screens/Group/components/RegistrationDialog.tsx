@@ -23,13 +23,14 @@ import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 import { AVAILABLE_CAPABILITIES, RegisteredDroneResponse } from '../types';
+import {LocationSelector} from "@/screens/Group/utils/common.tsx";
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -38,22 +39,6 @@ const DefaultIcon = L.icon({
   iconAnchor: [12, 41],
 });
 L.Marker.prototype.options.icon = DefaultIcon;
-
-function LocationSelector({
-  position,
-  onLocationSelect,
-}: {
-  position: { lat: number; lng: number } | null;
-  onLocationSelect: (lat: number, lng: number) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      onLocationSelect(e.latlng.lat, e.latlng.lng);
-    },
-  });
-
-  return position ? <Marker position={position} /> : null;
-}
 
 export interface RegFormState {
   name: string;

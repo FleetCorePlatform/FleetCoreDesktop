@@ -100,182 +100,190 @@ export function DroneList({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDrones.map((drone) => (
-                <TableRow
-                  key={drone.uuid}
-                  className="border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-tertiary))]/50"
-                >
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-[hsl(var(--text-primary))]">
-                        {drone.name}
-                      </span>
-                      <span className="text-xs font-mono text-[hsl(var(--text-muted))]">
-                        {drone.uuid.substring(0, 8)}...
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-sm font-mono text-[hsl(var(--text-secondary))]">
-                      <Network size={14} />
-                      {drone.address}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[hsl(var(--text-muted))] w-8">Agent:</span>
-                        <span className="font-mono text-[hsl(var(--text-secondary))]">
-                          {drone.manager_version}
+              {filteredDrones.length === 0 ? (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={7} className="h-32 text-center text-sm text-[hsl(var(--text-muted))]">
+                      No drones registered in this group.
+                    </TableCell>
+                  </TableRow>
+              ) : (
+                filteredDrones.map((drone) => (
+                  <TableRow
+                    key={drone.uuid}
+                    className="border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-tertiary))]/50"
+                  >
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-[hsl(var(--text-primary))]">
+                          {drone.name}
+                        </span>
+                        <span className="text-xs font-mono text-[hsl(var(--text-muted))]">
+                          {drone.uuid.substring(0, 8)}...
                         </span>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {drone.home_position ? (
-                      <div className="flex items-center gap-2 text-xs font-mono text-[hsl(var(--text-secondary))]">
-                        <MapPin size={14} className="shrink-0" />
-                        <div className="grid grid-cols-[auto_1fr] gap-x-2">
-                          <span className="inline-block w-[13ch]">
-                            Lat:{drone.home_position.x.toFixed(4)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-sm font-mono text-[hsl(var(--text-secondary))]">
+                        <Network size={14} />
+                        {drone.address}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[hsl(var(--text-muted))] w-8">Agent:</span>
+                          <span className="font-mono text-[hsl(var(--text-secondary))]">
+                            {drone.manager_version}
                           </span>
-                          <span>Lon:{drone.home_position.y.toFixed(4)}</span>
                         </div>
                       </div>
-                    ) : (
-                      <span className="text-xs text-[hsl(var(--text-muted))] italic">Not Set</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={`capitalize font-normal border ${getBadgeColor(drone)}`}
-                    >
-                      {drone.maintenance ? 'Maintenance' : drone.inFlight ? 'In Flight' : 'Ready'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="w-[150px]">
-                    <div className="flex items-center gap-3">
-                      {drone.remaining_percent != null ? (
-                        <>
-                          <Battery
-                            size={16}
-                            className={
-                              drone.remaining_percent < 20
-                                ? 'text-red-400'
-                                : 'text-[hsl(var(--text-secondary))]'
-                            }
-                          />
-                          <Progress
-                            value={drone.remaining_percent}
-                            className="h-1.5 w-full bg-[hsl(var(--bg-tertiary))]"
-                          />
-                          <span className="text-xs font-mono w-8 text-right">
-                            {drone.remaining_percent}%
-                          </span>
-                        </>
+                    </TableCell>
+                    <TableCell>
+                      {drone.home_position ? (
+                        <div className="flex items-center gap-2 text-xs font-mono text-[hsl(var(--text-secondary))]">
+                          <MapPin size={14} className="shrink-0" />
+                          <div className="grid grid-cols-[auto_1fr] gap-x-2">
+                            <span className="inline-block w-[13ch]">
+                              Lat:{drone.home_position.x.toFixed(4)}
+                            </span>
+                            <span>Lon:{drone.home_position.y.toFixed(4)}</span>
+                          </div>
+                        </div>
                       ) : (
-                        <span
-                          className="text-xs font-mono text-[hsl(var(--text-secondary))]"
-                          title="Drone is in the dock"
-                        >
-                          N/A
-                        </span>
+                        <span className="text-xs text-[hsl(var(--text-muted))] italic">Not Set</span>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {drone?.uuid && (
-                        <Link to={`/drones/${drone.uuid}/control`} state={{ drone }}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
-                            title="Open Control Center"
-                          >
-                            <Joystick size={14} />
-                          </Button>
-                        </Link>
-                      )}
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            title="Edit properties"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
-                          >
-                            <SlidersHorizontal size={14} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-56 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]"
-                        >
-                          <DropdownMenuItem
-                            onClick={() => onEditClick(drone, 'address')}
-                            className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
-                          >
-                            Change Address
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onEditClick(drone, 'name')}
-                            className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
-                          >
-                            Change Name
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onEditClick(drone, 'version')}
-                            className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
-                          >
-                            Change Agent Version
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onEditClick(drone, 'group')}
-                            className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
-                          >
-                            Change Group
-                          </DropdownMenuItem>
-
-                          <DropdownMenuSeparator className="bg-[hsl(var(--border-primary))]/50 my-1" />
-
-                          <DropdownMenuItem
-                            title={drone.maintenance ? 'Maintenance is already active' : ''}
-                            onClick={(e) => {
-                              if (drone.maintenance) {
-                                e.preventDefault();
-                                return;
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={`capitalize font-normal border ${getBadgeColor(drone)}`}
+                      >
+                        {drone.maintenance ? 'Maintenance' : drone.inFlight ? 'In Flight' : 'Ready'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="w-[150px]">
+                      <div className="flex items-center gap-3">
+                        {drone.remaining_percent != null ? (
+                          <>
+                            <Battery
+                              size={16}
+                              className={
+                                drone.remaining_percent < 20
+                                  ? 'text-red-400'
+                                  : 'text-[hsl(var(--text-secondary))]'
                               }
-                              onMaintenanceClick(drone);
-                            }}
-                            className={`
-                                                                        flex items-center gap-2 
-                                                                        ${
-                                                                          drone.maintenance
-                                                                            ? 'opacity-50 cursor-not-allowed focus:bg-transparent'
-                                                                            : 'cursor-pointer text-amber-500 focus:text-amber-400 focus:bg-amber-500/10'
-                                                                        }`}
-                            aria-disabled={drone.maintenance}
+                            />
+                            <Progress
+                              value={drone.remaining_percent}
+                              className="h-1.5 w-full bg-[hsl(var(--bg-tertiary))]"
+                            />
+                            <span className="text-xs font-mono w-8 text-right">
+                              {drone.remaining_percent}%
+                            </span>
+                          </>
+                        ) : (
+                          <span
+                            className="text-xs font-mono text-[hsl(var(--text-secondary))]"
+                            title="Drone is in the dock"
                           >
-                            <Construction size={14} />
-                            <span>Register maintenance</span>
-                          </DropdownMenuItem>
+                            N/A
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {drone?.uuid && (
+                          <Link to={`/drones/${drone.uuid}/control`} state={{ drone }}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                              title="Open Control Center"
+                            >
+                              <Joystick size={14} />
+                            </Button>
+                          </Link>
+                        )}
 
-                          <DropdownMenuItem
-                            onClick={() => onDecommissionClick(drone)}
-                            className="cursor-pointer text-red-500 focus:text-red-400 focus:bg-red-500/10 flex items-center gap-2"
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              title="Edit properties"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                            >
+                              <SlidersHorizontal size={14} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-[hsl(var(--bg-tertiary))] border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))]"
                           >
-                            <Trash2 size={14} />
-                            <span>Decommission drone</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                            <DropdownMenuItem
+                              onClick={() => onEditClick(drone, 'address')}
+                              className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
+                            >
+                              Change Address
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onEditClick(drone, 'name')}
+                              className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
+                            >
+                              Change Name
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onEditClick(drone, 'version')}
+                              className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
+                            >
+                              Change Agent Version
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onEditClick(drone, 'homePosition')}
+                              className="cursor-pointer focus:bg-[hsl(var(--text-primary))]/10 focus:text-[hsl(var(--text-primary))]"
+                            >
+                              Change Home Position
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="bg-[hsl(var(--border-primary))]/50 my-1" />
+
+                            <DropdownMenuItem
+                              title={drone.maintenance ? 'Maintenance is already active' : ''}
+                              onClick={(e) => {
+                                if (drone.maintenance) {
+                                  e.preventDefault();
+                                  return;
+                                }
+                                onMaintenanceClick(drone);
+                              }}
+                              className={`
+                                                                          flex items-center gap-2 
+                                                                          ${
+                                                                            drone.maintenance
+                                                                              ? 'opacity-50 cursor-not-allowed focus:bg-transparent'
+                                                                              : 'cursor-pointer text-amber-500 focus:text-amber-400 focus:bg-amber-500/10'
+                                                                          }`}
+                              aria-disabled={drone.maintenance}
+                            >
+                              <Construction size={14} />
+                              <span>Register maintenance</span>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => onDecommissionClick(drone)}
+                              className="cursor-pointer text-red-500 focus:text-red-400 focus:bg-red-500/10 flex items-center gap-2"
+                            >
+                              <Trash2 size={14} />
+                              <span>Decommission drone</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

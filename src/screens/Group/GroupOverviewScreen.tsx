@@ -10,9 +10,9 @@ import {
   MAINTENANCE_TYPES,
   PUBLIC_IP_REGEX,
   EditDroneField,
-  PatchDroneRequestModel,
+  UpdateDroneModel,
   RegisteredDroneResponse,
-  GroupModel,
+  GroupModel, DroneHomePositionModel,
 } from './types';
 
 import { GroupHeader } from './components/GroupHeader';
@@ -23,6 +23,7 @@ import { MaintenanceDialog } from './components/MaintenanceDialog';
 import { EditDroneDialog } from './components/EditDroneDialog';
 import { DecommissionDialog } from './components/DecommissionDialog';
 import { DeleteGroupDialog } from './components/DeleteGroupDialog';
+import {EditGroupDialog} from "@/screens/Group/components/EditGroupDialog.tsx";
 
 export default function GroupOverviewScreen() {
   const { groupUuid, outpostUuid } = useParams<{ groupUuid: string; outpostUuid: string }>();
@@ -34,7 +35,8 @@ export default function GroupOverviewScreen() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDrone, setEditingDrone] = useState<DroneSummaryModel | null>(null);
   const [editField, setEditField] = useState<EditDroneField | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editValue, setEditValue] = useState<string>('');
+  const [editHomePosition, setEditHomePosition] = useState<DroneHomePositionModel>();
   const [error, setError] = useState<string | null>(null);
 
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -42,7 +44,9 @@ export default function GroupOverviewScreen() {
   const [createdDroneBody, setCreatedDroneBody] = useState<RegisteredDroneResponse | null>(null);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
+  const [renameInput, setRenameInput] = useState('');
 
   const [isDecommissionOpen, setIsDecommissionOpen] = useState(false);
   const [decommissionDrone, setDecommissionDrone] = useState<DroneSummaryModel | null>(null);
@@ -62,6 +66,7 @@ export default function GroupOverviewScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   const [regForm, setRegForm] = useState<RegFormState>({
     name: '',
@@ -162,6 +167,28 @@ export default function GroupOverviewScreen() {
       });
   };
 
+  const confirmEdit = async () => {
+    if (renameInput === targetGroupName) return;
+    setRenameError(null);
+
+    const payload = {
+      groupName: renameInput
+    }
+
+    await apiCallFull(`/api/v1/groups/${groupUuid}`, undefined, 'PATCH', payload)
+        .then((res) => {
+          if (res.status === 204) {
+            setIsRenameOpen(false);
+            setRenameInput('');
+            navigate(0);
+          }
+        })
+        .catch((e) => {
+          console.error('Error while renaming group: ', e);
+          setRenameError('An unexpected error occurred while renaming the group.');
+        });
+  };
+
   const openDecommissionModal = (drone: DroneSummaryModel) => {
     setDecommissionDrone(drone);
     setDecommissionInput('');
@@ -215,7 +242,7 @@ export default function GroupOverviewScreen() {
     }
 
     const payload: RegisterDroneRequest = {
-      groupName: targetGroupName,
+      groupName: groupUuid!,
       droneName: regForm.name,
       address: regForm.address,
       px4Version: regForm.px4,
@@ -257,8 +284,8 @@ export default function GroupOverviewScreen() {
       case 'version':
         setEditValue(drone.manager_version);
         break;
-      case 'group':
-        setEditValue(targetGroupName);
+      case 'homePosition':
+        setEditHomePosition(drone.home_position);
         break;
     }
     setIsDialogOpen(true);
@@ -274,11 +301,11 @@ export default function GroupOverviewScreen() {
       }
     }
 
-    const payload: PatchDroneRequestModel = {
-      groupName: editField === 'group' ? editValue : editingDrone.group_name,
+    const payload: UpdateDroneModel = {
       droneName: editField === 'name' ? editValue : editingDrone.name,
       address: editField === 'address' ? editValue : editingDrone.address,
       agentVersion: editField === 'version' ? editValue : editingDrone.manager_version,
+      homePosition: editField === 'homePosition' ? editHomePosition : editingDrone.home_position,
     };
 
     apiCallFull(`/api/v1/drones/${editingDrone.uuid || ''}`, undefined, 'PATCH', payload)
@@ -312,6 +339,7 @@ export default function GroupOverviewScreen() {
             groupUuid={groupUuid}
             outpostUuid={outpostUuid}
             onDeleteClick={handleDeleteClick}
+            onRenameClick={() => setIsRenameOpen(true)}
             onRegisterClick={() => setIsRegisterOpen(true)}
           />
 
@@ -379,6 +407,16 @@ export default function GroupOverviewScreen() {
         error={deleteError}
       />
 
+      <EditGroupDialog
+          open={isRenameOpen}
+          onOpenChange={setIsRenameOpen}
+          targetGroupName={targetGroupName}
+          input={renameInput}
+          setInput={setRenameInput}
+          onConfirm={confirmEdit}
+          error={renameError}
+      />
+
       <DecommissionDialog
         open={isDecommissionOpen}
         onOpenChange={setIsDecommissionOpen}
@@ -394,6 +432,8 @@ export default function GroupOverviewScreen() {
         drone={editingDrone}
         field={editField}
         value={editValue}
+        homePositionValue={editHomePosition!}
+        onHomePositionValueChange={setEditHomePosition}
         onValueChange={(val) => {
           setEditValue(val);
           if (error) setError(null);
