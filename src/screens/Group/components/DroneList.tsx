@@ -6,7 +6,7 @@ import {
   SlidersHorizontal,
   Construction,
   Trash2,
-  Joystick,
+  MonitorCog,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 
 import {Link} from 'react-router-dom';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 interface DroneListProps {
   filteredDrones: DroneSummaryModel[];
@@ -194,16 +195,37 @@ export function DroneList({
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {drone?.uuid && (
-                          <Link to={`/drones/${drone.uuid}/control`} state={{ drone }}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
-                              title="Open Control Center"
-                            >
-                              <Joystick size={14} />
-                            </Button>
-                          </Link>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-block">
+                                  <Link
+                                    to={drone!.maintenance ? '#' : `/drones/${drone.uuid}/control`}
+                                    state={{ drone }}
+                                    onClick={(e) => drone!.maintenance && e.preventDefault()}
+                                  >
+                                    <Button
+                                      variant="ghost"
+                                      disabled={drone!.maintenance}
+                                      size="sm"
+                                      className={`h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]! ${
+                                        drone!.maintenance ? 'pointer-events-none' : ''
+                                      }`}
+                                    >
+                                      <MonitorCog size={14} />
+                                    </Button>
+                                  </Link>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  {drone!.maintenance
+                                    ? 'Drone cannot be managed while in maintenance mode'
+                                    : 'Open Control Center'}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
 
                         <DropdownMenu>
@@ -212,7 +234,7 @@ export function DroneList({
                               title="Edit properties"
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                              className="h-8 w-8 p-0 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-tertiary))]!"
                             >
                               <SlidersHorizontal size={14} />
                             </Button>
