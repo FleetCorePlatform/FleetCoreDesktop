@@ -166,8 +166,10 @@ export default function MissionItem({
                 <span className="flex items-center gap-1 text-[hsl(var(--text-muted))]">
                   <Timer size={10} />
                   {details
-                    ? getDuration(details.startedAt, details.finishedAt)
-                    : 'Click for details'}
+                      ? details.jobStatus === 'SCHEDULED'
+                          ? 'Scheduled'
+                          : getDuration(details.startedAt, details.finishedAt)
+                      : 'Click for details'}
                 </span>
               </div>
             </div>
@@ -273,14 +275,16 @@ export default function MissionItem({
                         <Battery size={12} /> Execution Summary
                       </div>
                       <div className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">
-                        Mission started at{' '}
+                        Mission created at{' '}
                         <span className="text-[hsl(var(--text-primary))]">
                           {formatTime(details.startedAt)}
                         </span>
                         .
                         {details.finishedAt
                           ? ` Completed successfully at ${formatTime(details.finishedAt)}.`
-                          : ' Execution is currently ongoing.'}
+                          : details.jobStatus === 'SCHEDULED'
+                              ? ` Scheduled to run at: ${details.scheduledTo?.replace("T", " ")}`
+                              : ' Execution is currently ongoing.'}
                       </div>
                     </div>
                   </>

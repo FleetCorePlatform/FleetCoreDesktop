@@ -48,6 +48,10 @@ export default function MissionCreationScreen() {
   const [missionAltitude, setMissionAltitude] = useState([25]);
   const [cruiseSpeed, setCruiseSpeed] = useState([15]);
 
+  const [schedulerEnabled, setSchedulerEnabled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<string>('');
+  const [scheduledTime, setScheduledTime] = useState<string>('12:30');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,9 +77,10 @@ export default function MissionCreationScreen() {
     if (missionType === 'SOLO' && selectedDrones.length !== 1) return false;
     if (missionType === 'SOLO' && hasWaypointOutsideGeofence) return false;
     if (missionType === 'SUBSET' && selectedDrones.length === 0) return false;
+    if (schedulerEnabled && (scheduledDate == '' || scheduledTime == '')) return false;
     return !isSubmitting;
 
-  }, [jobName, missionType, soloWaypoints, selectedDrones, isSubmitting]);
+  }, [jobName, missionType, soloWaypoints, selectedDrones, isSubmitting, schedulerEnabled, scheduledDate, scheduledTime]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -106,36 +111,43 @@ export default function MissionCreationScreen() {
     setIsSubmitting(true);
     setMissionProgress('calculating');
 
-    const payload = (() => {
-      switch (missionType) {
-        case 'SOLO':
-          return {
-            jobName: jobName,
-            droneUuid: selectedDrones[0],
-            waypoints: soloWaypoints,
-            altitude: missionAltitude[0],
-            speed: cruiseSpeed[0],
-            returnToLaunch: returnToLaunch
-          } satisfies CreateSoloMissionRequest;
-        case 'FULL':
-          return {
-            jobName: jobName,
-            outpostUuid: outpost.uuid,
-            groupUuid: groupData.groupUUID,
-            altitude: missionAltitude[0]
-          } satisfies CreateGroupMissionRequest;
-        case 'SUBSET':
-          return {
-            jobName: jobName,
-            outpostUuid: outpost.uuid,
-            groupUuid: groupData.groupUUID,
-            droneUuids: selectedDrones,
-            altitude: missionAltitude[0]
-          } satisfies CreateGroupMissionRequest;
-        default:
-          throw new Error(`Unhandled mission type: ${missionType}`);
-      }
-    })();
+    const scheduled = schedulerEnabled && scheduledDate && scheduledTime
+        ? `${scheduledDate}T${scheduledTime}`
+        : null;
+
+    const payload = {
+      ...(() => {
+        switch (missionType) {
+          case 'SOLO':
+            return {
+              jobName: jobName,
+              droneUuid: selectedDrones[0],
+              waypoints: soloWaypoints,
+              altitude: missionAltitude[0],
+              speed: cruiseSpeed[0],
+              returnToLaunch: returnToLaunch
+            } satisfies CreateSoloMissionRequest;
+          case 'FULL':
+            return {
+              jobName: jobName,
+              outpostUuid: outpost.uuid,
+              groupUuid: groupData.groupUUID,
+              altitude: missionAltitude[0]
+            } satisfies CreateGroupMissionRequest;
+          case 'SUBSET':
+            return {
+              jobName: jobName,
+              outpostUuid: outpost.uuid,
+              groupUuid: groupData.groupUUID,
+              droneUuids: selectedDrones,
+              altitude: missionAltitude[0]
+            } satisfies CreateGroupMissionRequest;
+          default:
+            throw new Error(`Unhandled mission type: ${missionType}`);
+        }
+      })(),
+      scheduled
+    };
 
     await apiCallFull(`/api/v1/missions/${missionType === 'SOLO' ? 'solo' : 'group'}`, undefined, 'POST', payload)
         .then((res) => {
@@ -187,6 +199,12 @@ export default function MissionCreationScreen() {
           setJobName={setJobName}
           selectedDrones={selectedDrones}
           setSelectedDrones={setSelectedDrones}
+          schedulerEnabled={schedulerEnabled}
+          setSchedulerEnabled={setSchedulerEnabled}
+          scheduledDate={scheduledDate}
+          setScheduledDate={setScheduledDate}
+          scheduledTime={scheduledTime}
+          setScheduledTime={setScheduledTime}
           isSubmitting={isSubmitting}
           canSubmit={canSubmit}
           handleConfirmMission={handleConfirmMission}

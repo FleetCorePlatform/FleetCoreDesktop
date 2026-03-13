@@ -23,6 +23,7 @@ import {DroneSingleSelect} from "@/screens/Mission/components/DroneSingleSelect.
 import {DroneSummaryModel} from "@/screens/Group/types.ts";
 import React from "react";
 import {estimateMissionTime} from "@/screens/Mission/utils/common.ts";
+import {ScheduleDatePicker} from "@/screens/Mission/components/ScheduleDatePicker.tsx";
 
 interface MissionSidebarProps {
   drones: DroneSummaryModel[];
@@ -41,6 +42,12 @@ interface MissionSidebarProps {
   setJobName: (val: string) => void;
   selectedDrones: string[];
   setSelectedDrones: React.Dispatch<React.SetStateAction<string[]>>;
+  schedulerEnabled: boolean;
+  setSchedulerEnabled: (val: boolean) => void;
+  scheduledDate: string;
+  setScheduledDate: (val: string) => void;
+  scheduledTime: string;
+  setScheduledTime: (val: string) => void;
   isSubmitting: boolean;
   canSubmit: boolean;
   handleConfirmMission: () => void;
@@ -65,11 +72,18 @@ export function MissionSidebar({
   setJobName,
   selectedDrones,
   setSelectedDrones,
+  schedulerEnabled,
+  setSchedulerEnabled,
+  scheduledDate,
+  setScheduledDate,
+  scheduledTime,
+  setScheduledTime,
   isSubmitting,
   canSubmit,
   handleConfirmMission,
   soloWaypoints,
   navigate,
+
 }: MissionSidebarProps) {
   return (
     <aside
@@ -265,6 +279,17 @@ export function MissionSidebar({
             }
           </div>
 
+          {/* Scheduled Execution */}
+          <div className="bg-[hsl(var(--bg-tertiary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
+            <ScheduleDatePicker
+                schedulerEnabled={schedulerEnabled}
+                setSchedulerEnabled={setSchedulerEnabled}
+                scheduledDate={scheduledDate}
+                setScheduledDate={setScheduledDate}
+                scheduledTime={scheduledTime}
+                setScheduledTime={setScheduledTime}
+            />
+          </div>
 
           {missionType != 'SOLO' &&
             <div className="p-3 rounded bg-blue-500/10 border border-blue-500/20 text-xs text-[hsl(var(--text-secondary))]">

@@ -4,6 +4,7 @@ export interface MissionDetails {
   jobStatus: string;
   startedAt: string;
   finishedAt?: string;
+  scheduledTo?: string;
 }
 
 
@@ -14,6 +15,7 @@ export interface CreateSoloMissionRequest {
   altitude: number,
   speed?: number,
   returnToLaunch?: boolean,
+  scheduled?: string,
 }
 
 export interface CreateGroupMissionRequest {
@@ -22,6 +24,7 @@ export interface CreateGroupMissionRequest {
   groupUuid: string,
   droneUuids?: Array<string>,
   altitude: number,
+  scheduled?: string,
 }
 
 export enum MissionBodyEnum {

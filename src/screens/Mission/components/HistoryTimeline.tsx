@@ -32,7 +32,7 @@ export function HistoryTimeline({
         <div className="flex items-center gap-3 mb-6 ml-3.5">
           <Switch checked={showSolo} onCheckedChange={setShowSolo} />
           <Label className="text-xs text-[hsl(var(--text-secondary))]">
-            {showSolo ? 'Solo Missions' : 'Group Missions'}
+            {showSolo ? 'Solo Missions Included' : 'Group Missions Only'}
           </Label>
         </div>
 

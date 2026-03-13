@@ -4,7 +4,7 @@ import {
   FieldDescription,
   FieldLabel,
   FieldTitle,
-} from '@/components/ui/field';
+} from '@/components/ui/field.tsx';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { MissionType } from '@/screens/Mission/types.ts';
 
