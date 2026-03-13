@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { OnScreenJoystick } from './OnScreenJoystick';
 import { DroneSummaryModel } from '@/screens/Group/types.ts';
 import {ControlStatus, LiveTelemetryData} from '@/screens/Drone/types.ts';
+import {formatUptime} from "@/screens/Drone/utils/common.ts";
 
 interface DroneControlCameraProps {
   drone: DroneSummaryModel;
@@ -50,14 +51,6 @@ export function DroneControlCamera({
   onStartStream,
   onToggleControl,
 }: DroneControlCameraProps) {
-  const formatUptime = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
-    const mins = Math.floor(seconds / 60);
-    if (mins < 60) return `${mins}m ${seconds % 60}s`;
-    const hours = Math.floor(mins / 60);
-    return `${hours}h ${mins % 60}m`;
-  };
-
   return (
     <div className="relative w-full h-full bg-[hsl(var(--bg-secondary))] overflow-hidden flex flex-col">
       {/* HUD Header */}

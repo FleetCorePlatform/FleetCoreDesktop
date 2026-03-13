@@ -18,22 +18,31 @@ let lastSent = 0;
 const SEND_INTERVAL = 50;
 
 let activeDataChannel: RTCDataChannel | null = null;
-let statusCallback: ((status: ControlStatus) => void) | null = null;
 
-let telemetryCallback: ((telemetry: LiveTelemetryData) => void) | null = null;
+const telemetryListeners = new Set<(telemetry: LiveTelemetryData) => void>();
 
-export const setControlStatusListener = (cb: (status: ControlStatus) => void) => {
-  statusCallback = cb;
+export const addTelemetryListener = (cb: (telemetry: LiveTelemetryData) => void) => {
+  telemetryListeners.add(cb);
+};
+
+export const removeTelemetryListener = (cb: (telemetry: LiveTelemetryData) => void) => {
+  telemetryListeners.delete(cb);
+};
+
+const controlStatusListeners = new Set<(status: ControlStatus) => void>();
+
+export const addControlStatusListener = (cb: (status: ControlStatus) => void) => {
+  controlStatusListeners.add(cb);
   cb(currentStatus);
 };
 
-export const setTelemetryListener = (cb: ((telemetry: LiveTelemetryData) => void) | null) => {
-  telemetryCallback = cb;
+export const removeControlStatusListener = (cb: (status: ControlStatus) => void) => {
+  controlStatusListeners.delete(cb);
 };
 
 const updateStatus = (newStatus: ControlStatus) => {
   currentStatus = newStatus;
-  if (statusCallback) statusCallback(currentStatus);
+  controlStatusListeners.forEach(cb => cb(currentStatus));
 };
 
 let cmdResponseCallback: ((payload: any) => void) | null = null;
@@ -69,15 +78,17 @@ const processIncomingPacket = (packet: DataChannelPacket) => {
     if (packet.payload.status === 'ACCEPTED') {
       console.log('[CONTROL] Handshake Accepted');
       updateStatus(ControlStatus.ACTIVE);
+    } else if (packet.payload.status === 'STOPPED') {
+      console.warn(`[CONTROL] Handshake Released: ${packet.payload.reason}`);
+      updateStatus(ControlStatus.IDLE);
+      controlSequenceId = 0;
     } else {
       console.warn(`[CONTROL] Handshake Denied/Stopped: ${packet.payload.reason}`);
       updateStatus(ControlStatus.IDLE);
       controlSequenceId = 0;
     }
   } else if (packet.type === PacketType.TELEMETRY) {
-    if (telemetryCallback) {
-      telemetryCallback(packet.payload)
-    }
+    telemetryListeners.forEach(cb => cb(packet.payload));
   } else if (packet.type === PacketType.CMD_ACK) {
     console.log(`Received packet with type ${packet.type}, and content: ${packet.payload}`);
     if (cmdResponseCallback) {

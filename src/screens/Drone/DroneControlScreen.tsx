@@ -19,7 +19,8 @@ import {
   sendManualControl,
   releaseManualControl,
   requestManualControl,
-  setControlStatusListener,
+  addControlStatusListener,
+  removeControlStatusListener,
 } from '@/utils/droneManualControl.ts';
 import {useWebRtcStats} from "@/hooks/useWebRtcStats.ts";
 import {useTelemetry} from "@/hooks/useTelemetry.ts";
@@ -40,9 +41,10 @@ export default function DroneControlScreen() {
   const [controlStatus, setControlStatus] = useState<ControlStatus>(ControlStatus.IDLE);
 
   useEffect(() => {
-    setControlStatusListener((status) => setControlStatus(status));
+    const handleStatusChange = (status: ControlStatus) => setControlStatus(status);
+    addControlStatusListener(handleStatusChange);
     return () => {
-      setControlStatusListener(() => {});
+      removeControlStatusListener(handleStatusChange);
     };
   }, []);
 

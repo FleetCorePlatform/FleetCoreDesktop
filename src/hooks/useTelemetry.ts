@@ -1,6 +1,6 @@
-import {LiveTelemetryData} from "@/screens/Drone/types.ts";
-import {useEffect, useState} from "react";
-import {setTelemetryListener} from "@/utils/droneManualControl.ts";
+import { LiveTelemetryData } from "@/screens/Drone/types.ts";
+import { useEffect, useState } from "react";
+import { addTelemetryListener, removeTelemetryListener } from "@/utils/droneManualControl.ts";
 
 export function useTelemetry() {
     const [telemetry, setTelemetry] = useState<LiveTelemetryData | null>(null);
@@ -16,10 +16,10 @@ export function useTelemetry() {
             ]);
         };
 
-        setTelemetryListener(handleTelemetryData)
+        addTelemetryListener(handleTelemetryData);
 
         return () => {
-            setTelemetryListener(null);
+            removeTelemetryListener(handleTelemetryData);
         };
     }, []);
 

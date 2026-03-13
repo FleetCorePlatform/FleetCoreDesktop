@@ -1,31 +1,14 @@
 import { Wifi, Server, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Drone } from '../types';
+import {Drone, LiveTelemetryData} from '../types';
+import {formatUptime} from "@/screens/Drone/utils/common.ts";
 
 interface DroneStatusGridProps {
   drone: Drone;
+  telemetry: LiveTelemetryData | null;
 }
 
-export function DroneStatusGrid({ drone }: DroneStatusGridProps) {
-  const formatUptime = (timestamp: number | null, isConnected: boolean = true) => {
-    if (!isConnected || !timestamp) return 'OFFLINE';
-
-    const diff = Date.now() - timestamp;
-    const minutes = Math.floor(diff / 1000 / 60);
-    const hours = Math.floor(minutes / 60);
-
-    const days = Math.floor(hours / 24);
-    const displayHours = hours % 24;
-    const displayMinutes = minutes % 60;
-
-    let result = '';
-    if (days > 0) result += `${days}d `;
-    if (displayHours > 0 || days > 0) result += `${displayHours}h `;
-    result += `${displayMinutes}m`;
-
-    return result;
-  };
-
+export function DroneStatusGrid({ drone, telemetry }: DroneStatusGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card className="bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))]">
@@ -57,7 +40,7 @@ export function DroneStatusGrid({ drone }: DroneStatusGridProps) {
           </span>
           <div className="flex items-start gap-3 mt-1">
             <div className="mt-1">
-              {drone.status?.connected ? (
+              {telemetry?.uptime_s != null ? (
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
@@ -69,9 +52,9 @@ export function DroneStatusGrid({ drone }: DroneStatusGridProps) {
 
             <div className="flex flex-col gap-0.5">
               <span
-                className={`text-lg font-mono leading-none ${drone.status?.connected ? 'text-[hsl(var(--text-primary))]' : 'text-zinc-500'}`}
+                className={`text-lg font-mono leading-none ${telemetry?.uptime_s != null ? 'text-[hsl(var(--text-primary))]' : 'text-zinc-500'}`}
               >
-                {formatUptime(drone.status?.uptime, drone.status?.connected)}
+                {telemetry ? formatUptime(telemetry.uptime_s) : 'OFFLINE'}
               </span>
 
               <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">

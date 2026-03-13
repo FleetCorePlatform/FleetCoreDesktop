@@ -84,7 +84,7 @@ export function DroneInfoPanel({ droneUuid, telemetry, telemetryHistory }: Drone
               <TelemetryChart
                   title="Battery — Last 30s"
                   data={telemetryHistory}
-                  dataKey="data.battery.remaining_percent"
+                  getValue={(data) => data.battery.remaining_percent}
                   unit="%"
                   domain={[0, 100]}
               />
@@ -94,7 +94,7 @@ export function DroneInfoPanel({ droneUuid, telemetry, telemetryHistory }: Drone
               <TelemetryChart
                   title="Signal Strength"
                   data={telemetryHistory}
-                  dataKey="data.signal_strength_dbm"
+                  getValue={(data) => data.signal_strength_dbm}
                   unit=" dBm"
                   color="#6366f1"
                   domain={[-100, 0]}
@@ -105,9 +105,11 @@ export function DroneInfoPanel({ droneUuid, telemetry, telemetryHistory }: Drone
               <TelemetryChart
                   title="Ground Speed"
                   data={telemetryHistory}
-                  dataKey="data.velocity.ground_speed_ms"
+                  getValue={(data) => data.velocity.ground_speed_ms < 0.2 ? 0 : data.velocity.ground_speed_ms}
                   unit=" m/s"
                   color="#f59e0b"
+                  fractionDigits={0}
+                  domain={[0, 'auto']}
               />
             </div>
           </div>
@@ -118,9 +120,10 @@ export function DroneInfoPanel({ droneUuid, telemetry, telemetryHistory }: Drone
                 drone={drone}
                 homePosition={[drone.home_position.y, drone.home_position.x]}
                 livePosition={telemetry ? [telemetry.position.latitude_deg, telemetry.position.longitude_deg] : undefined}
+                headingDeg={telemetry ? telemetry.velocity.heading_deg : undefined}
                 theme={theme}
             />
-            <DroneStatusGrid drone={drone} />
+            <DroneStatusGrid drone={drone} telemetry={telemetry} />
             <DroneCapabilities drone={drone} />
           </div>
 
