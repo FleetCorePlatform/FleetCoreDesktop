@@ -78,7 +78,10 @@ export function useDroneStream(drone: DroneSummaryModel) {
     } catch (err) {
       streamStateRef.current = 'idle';
       setStreamActive(false);
-      setStreamError(err.message || 'Connection Failed');
+
+      const errorMessage = err instanceof Error ? err.message : 'Connection Failed';
+      setStreamError(errorMessage);
+
       setManualControlChannel(null);
     }
   });
