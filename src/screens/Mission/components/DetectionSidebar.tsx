@@ -141,7 +141,7 @@ export function DetectionSidebar({
                         <div className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))]">
                           <MapPin size={10} />
                           <span className="font-mono">
-                            {formatCoords(det.location.x, det.location.y)}
+                            {formatCoords(det.location?.x ?? 0.0, det.location?.y ?? 0.0)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))]">

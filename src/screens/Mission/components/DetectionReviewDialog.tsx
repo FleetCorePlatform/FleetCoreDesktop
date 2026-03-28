@@ -1,28 +1,16 @@
-import { useState } from 'react';
-import {
-  MapPin,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  ScanLine,
-  Maximize2,
-  Minimize2,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, CheckCircle2, MapPin, Maximize2, Minimize2, ScanLine, XCircle, } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
+import { Circle, MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { Detection } from '@/screens/Mission/types';
+import { useUser } from '@/context/UserContext';
+import { getBucketImage } from '@/utils/s3client.ts';
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -47,10 +35,30 @@ export function DetectionReviewDialog({
   sendDetectionConfirmation,
   theme,
 }: DetectionReviewDialogProps) {
+  const {credentials} = useUser()
+
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+
   const formatCoords = (lat: number, lng: number) => `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
   const toggleMap = () => setIsMapExpanded(!isMapExpanded);
+
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    const downloadDetectionImage = async () => {
+      if (!credentials || !selectedDetection) return;
+
+      try {
+        const src = await getBucketImage(credentials, selectedDetection.image_key);
+        setImageSrc(src);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    downloadDetectionImage();
+  }, [credentials, selectedDetection]);
 
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -139,14 +147,22 @@ export function DetectionReviewDialog({
                 </div>
 
                 <div className="w-full h-full relative group">
-                  {/* Placeholder Image */}
-                  <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
-                    <div className="text-zinc-700 flex flex-col items-center">
-                      <ScanLine size={64} />
-                      <span className="text-xs font-mono mt-4 uppercase tracking-[0.2em]">
-                        Image Data Unavailable
-                      </span>
-                    </div>
+                  {/* Detection Image */}
+                  <div className="w-full h-full bg-zinc-900 flex items-center justify-center rounded-xl">
+                    {imageSrc ? (
+                      <img
+                        src={imageSrc}
+                        alt="Rendered source"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-zinc-700 flex flex-col items-center">
+                        <ScanLine size={64} />
+                        <span className="text-xs font-mono mt-4 uppercase tracking-[0.2em]">
+                          Image Data Unavailable
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Overlay HUD */}
@@ -192,7 +208,7 @@ export function DetectionReviewDialog({
                     <span
                       className={`font-mono text-[10px] text-[hsl(var(--text-primary))] ${!isMapExpanded && 'hidden md:inline'}`}
                     >
-                      {formatCoords(selectedDetection.location.x, selectedDetection.location.y)}
+                      {formatCoords(selectedDetection.location?.x ?? 0.0, selectedDetection.location?.y ?? 0.0)}
                     </span>
                     <div className="md:hidden text-[hsl(var(--text-muted))]">
                       {isMapExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
@@ -203,7 +219,7 @@ export function DetectionReviewDialog({
                 {/* Map */}
                 <div className="w-full h-full pt-6 md:pt-0">
                   <MapContainer
-                    center={[selectedDetection.location.x, selectedDetection.location.y]}
+                    center={[selectedDetection.location?.x ?? 0.0, selectedDetection.location?.y ?? 0.0]}
                     zoom={18}
                     style={{ height: '100%', width: '100%' }}
                     zoomControl={false}
@@ -221,7 +237,7 @@ export function DetectionReviewDialog({
                         attribution="&copy; OpenStreetMap &copy; CARTO"
                       />
                     )}
-                    <Marker position={[selectedDetection.location.x, selectedDetection.location.y]}>
+                    <Marker position={[selectedDetection.location?.x ?? 0.0, selectedDetection.location?.y ?? 0.0]}>
                       {isMapExpanded && (
                         <Popup className="font-mono text-xs">
                           {selectedDetection.object} <br />
@@ -230,7 +246,7 @@ export function DetectionReviewDialog({
                       )}
                     </Marker>
                     <Circle
-                      center={[selectedDetection.location.x, selectedDetection.location.y]}
+                      center={[selectedDetection.location?.x ?? 0.0, selectedDetection.location?.y ?? 0.0]}
                       radius={20}
                       pathOptions={{
                         color: 'red',
